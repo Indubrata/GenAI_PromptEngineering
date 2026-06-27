@@ -4,6 +4,7 @@ from prompts import PROMPT_MODES, PROMPT_EVALUATOR_SYSTEM
 from intents import check_and_execute_intent
 from image_handler import ImageHandler
 from image_styles import IMAGE_STYLES, DEFAULT_NEGATIVE_PROMPT
+from agent import Agent
 
 # Configure Streamlit page
 st.set_page_config(page_title="Prompt Engineering Chatbot", page_icon="🤖", layout="wide")
@@ -197,7 +198,7 @@ def export_chat(messages):
 with st.sidebar:
     st.title("J.A.R.V.I.S")
     
-    app_mode = st.radio("App Mode", ["Standard Chat", "Model A/B Arena", "Prompt Evaluator", "🖼️ Image Generation"])
+    app_mode = st.radio("App Mode", ["Agentic Mode", "Standard Chat", "Model A/B Arena", "Prompt Evaluator", "🖼️ Image Generation"])
     
     st.divider()
     
@@ -230,7 +231,113 @@ def get_system_prompt(mode_selection):
     return PROMPT_MODES[mode_selection]
 
 
-if app_mode == "Standard Chat":    
+if app_mode == "Agentic Mode":
+    st.markdown("### Autonomous AI Agent")
+    st.markdown("The agent can use tools like Web Search, Webpage Fetcher, and an advanced SymPy Calculator to solve complex problems and answer questions in multiple steps.")
+    
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        selected_model = st.selectbox("Select Model", available_models)
+    with col2:
+        if st.button("Clear Memory", use_container_width=True):
+            st.session_state.messages = []
+            st.rerun()
+            
+    # Display chat history
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            cls = "user-msg" if message["role"] == "user" else "assistant-msg"
+            if message["role"] == "assistant":
+                if "agent_steps" in message:
+                    for step in message["agent_steps"]:
+                        with st.expander(f"⚙️ Tool Call: {step['action']}"):
+                            st.markdown(f"**Thought:** {step['thought']}")
+                            st.markdown(f"**Action Input:** {step['action_input']}")
+                            st.markdown(f"**Result:** {step['result'][:500]}..." if len(step['result']) > 500 else f"**Result:** {step['result']}")
+            st.markdown(f"<div class='{cls}'></div> {message['content']}", unsafe_allow_html=True)
+
+    # Chat input
+    if prompt := st.chat_input("Ask a complex question requiring research or calculation..."):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(f"<div class='user-msg'></div> {prompt}", unsafe_allow_html=True)
+            
+        with st.chat_message("assistant"):
+            st.markdown("<div class='assistant-msg'></div>", unsafe_allow_html=True)
+            agent = Agent(handler, selected_model)
+            
+            agent_steps = []
+            final_content = ""
+            
+            with st.status("Agent is working...", expanded=True) as status:
+                for step in agent.run(prompt, st.session_state.messages[:-1]):
+                    if step["type"] == "tool_call":
+                        st.write(f"🤔 **Thinking:** {step['thought']}")
+                        st.write(f"🛠️ **Using Tool:** `{step['action']}` with input: `{step['action_input']}`")
+                        agent_steps.append({
+                            "thought": step['thought'],
+                            "action": step['action'],
+                            "action_input": step['action_input'],
+                            "result": "Pending..."
+                        })
+                    elif step["type"] == "tool_result":
+                        res = str(step['content'])
+                        st.write(f"✅ **Result:** {res[:200]}..." if len(res) > 200 else f"✅ **Result:** {res}")
+                        if agent_steps:
+                            agent_steps[-1]["result"] = res
+                    elif step["type"] == "final_answer":
+                        st.write(f"💡 **Final Thought:** {step['thought']}")
+                        final_content = step['content']
+                    elif step["type"] == "error":
+                        st.error(f"Error: {step['content']}")
+                        final_content = f"An error occurred: {step['content']}"
+                status.update(label="Agent Finished!", state="complete", expanded=False)
+                
+            st.markdown(final_content)
+            
+            st.session_state.messages.append({
+                "role": "assistant", 
+                "content": final_content,
+                "agent_steps": agent_steps
+            })
+            st.rerun()
+
+    # Report Generation
+    def wants_report(messages):
+        if not messages: return False
+        for msg in reversed(messages):
+            if msg['role'] == 'user':
+                return 'report' in msg['content'].lower()
+        return False
+        
+    if st.session_state.messages and len(st.session_state.messages) > 1 and wants_report(st.session_state.messages):
+        st.divider()
+        st.markdown("#### Generate Detailed Research Report")
+        st.markdown("Compile the recent findings into a downloadable PDF report.")
+        if st.button("Generate PDF Report", type="primary"):
+            with st.spinner("Compiling and generating PDF..."):
+                agent = Agent(handler, selected_model)
+                history_text = ""
+                for msg in st.session_state.messages[-4:]:  # Send recent context
+                    if msg['role'] == 'assistant':
+                        history_text += f"Assistant: {msg['content']}\n"
+                    else:
+                        history_text += f"User: {msg['content']}\n"
+                        
+                pdf_bytes, report_md = agent.generate_pdf_report(history_text)
+                
+                if pdf_bytes:
+                    st.success("Report generated successfully!")
+                    st.download_button(
+                        label="Download PDF Report",
+                        data=pdf_bytes,
+                        file_name="Research_Report.pdf",
+                        mime="application/pdf"
+                    )
+                else:
+                    st.error("Failed to generate PDF.")
+
+elif app_mode == "Standard Chat":    
     col1, col2 = st.columns(2)
     with col1:
         selected_model = st.selectbox("Select Model", available_models)
