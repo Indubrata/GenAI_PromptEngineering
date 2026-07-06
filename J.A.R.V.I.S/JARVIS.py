@@ -1,10 +1,11 @@
 import streamlit as st
 from llm_handler import LLMHandler
-from prompts import PROMPT_MODES, PROMPT_EVALUATOR_SYSTEM
+from prompts import PROMPT_MODES, PROMPT_EVALUATOR_SYSTEM, PROMPT_RAG
 from intents import check_and_execute_intent
 from image_handler import ImageHandler
 from image_styles import IMAGE_STYLES, DEFAULT_NEGATIVE_PROMPT
 from agent import Agent
+from rag_backend import RAGBackend
 
 # Configure Streamlit page
 st.set_page_config(page_title="Prompt Engineering Chatbot", page_icon="🤖", layout="wide")
@@ -186,6 +187,8 @@ if "arena_results" not in st.session_state:
     st.session_state.arena_results = []
 if "image_gallery" not in st.session_state:
     st.session_state.image_gallery = []
+if "rag_messages" not in st.session_state:
+    st.session_state.rag_messages = []
 
 def export_chat(messages):
     text = "# Chat History\n\n"
@@ -198,7 +201,7 @@ def export_chat(messages):
 with st.sidebar:
     st.title("J.A.R.V.I.S")
     
-    app_mode = st.radio("App Mode", ["Agentic Mode", "Standard Chat", "Model A/B Arena", "Prompt Evaluator", "🖼️ Image Generation"])
+    app_mode = st.radio("App Mode", ["Agentic Mode", "Standard Chat", "Model A/B Arena", "Prompt Evaluator", "🖼️ Image Generation", "📚 RAG Knowledge Base"])
     
     st.divider()
     
@@ -531,3 +534,238 @@ elif app_mode == "🖼️ Image Generation":
                 col = cols[i % 3]
                 with col:
                     st.image(item["image"], caption=item["prompt"], use_container_width=True)
+
+elif app_mode == "📚 RAG Knowledge Base":
+    import sqlite3  # Import sqlite3 here for safety
+    st.markdown("### 📚 Retrieval-Augmented Generation (RAG) Knowledge Base")
+    st.markdown("Upload files and ask questions grounded strictly in your custom knowledge base documents.")
+    
+    # Check if Gemini is available
+    selected_model = "Gemini 3.5 Flash"
+    if selected_model not in available_models:
+        selected_model = available_models[0] if available_models else None
+        
+    # Split UI into side-by-side columns
+    col_manage, col_chat = st.columns([1, 1])
+    
+    # ------------------ Column 1: Document Management ------------------
+    with col_manage:
+        st.subheader("📂 Manage Knowledge Base")
+        
+        # Multiple file uploader
+        uploaded_files = st.file_uploader(
+            "Upload Documents (PDF, DOCX, TXT, MD, CSV)",
+            type=["pdf", "docx", "txt", "md", "csv"],
+            accept_multiple_files=True
+        )
+        
+        if uploaded_files:
+            if st.button("⚡ Process and Index Uploaded Documents", use_container_width=True, type="primary"):
+                for uploaded_file in uploaded_files:
+                    with st.spinner(f"Indexing {uploaded_file.name}..."):
+                        file_bytes = uploaded_file.read()
+                        res = RAGBackend.add_document(
+                            filename=uploaded_file.name,
+                            file_bytes=file_bytes,
+                            file_size=len(file_bytes)
+                        )
+                        if res.get("success"):
+                            st.success(f"Successfully indexed {uploaded_file.name} ({res['chunks']} chunks)")
+                        else:
+                            st.error(f"Error processing {uploaded_file.name}: {res.get('error')}")
+                st.rerun()
+                
+        # List indexed documents
+        indexed_docs = RAGBackend.list_documents()
+        
+        if indexed_docs:
+            st.markdown(f"**Currently Indexed Documents ({len(indexed_docs)}):**")
+            
+            # Format documentation metadata table
+            doc_data = []
+            for doc in indexed_docs:
+                size_kb = doc['file_size_bytes'] / 1024.0
+                doc_data.append({
+                    "Document Name": doc["filename"],
+                    "Type": doc["file_type"],
+                    "Chunks": doc["total_chunks"],
+                    "Size": f"{size_kb:.1f} KB"
+                })
+            st.dataframe(doc_data, use_container_width=True)
+            
+            # Options to delete
+            col_del1, col_del2 = st.columns(2)
+            with col_del1:
+                doc_to_delete = st.selectbox("Select document to delete:", [d["filename"] for d in indexed_docs])
+                if st.button("🗑️ Delete Selected Document", use_container_width=True):
+                    if RAGBackend.delete_document(doc_to_delete):
+                        st.success(f"Deleted {doc_to_delete}")
+                        st.rerun()
+                    else:
+                        st.error("Failed to delete document")
+            with col_del2:
+                st.markdown("<br>", unsafe_allow_html=True)
+                if st.button("🚨 Clear Entire Database", use_container_width=True, type="secondary"):
+                    if RAGBackend.clear_database():
+                        st.success("Database cleared!")
+                        st.rerun()
+                    else:
+                        st.error("Failed to clear database")
+        else:
+            st.info("No documents uploaded yet. Upload a document above to get started!")
+
+        # Creative Feature: Database Statistics & Summary
+        if indexed_docs:
+            st.divider()
+            st.subheader("📊 Knowledge Base Statistics")
+            total_chunks = sum([d["total_chunks"] for d in indexed_docs])
+            total_size_kb = sum([d["file_size_bytes"] for d in indexed_docs]) / 1024.0
+            
+            stat_col1, stat_col2 = st.columns(2)
+            with stat_col1:
+                st.metric("Total Chunks", total_chunks)
+            with stat_col2:
+                st.metric("Total Size", f"{total_size_kb:.1f} KB")
+
+            # Generate knowledge base summary button using LLM
+            if st.button("📝 Generate Knowledge Base Summary", use_container_width=True):
+                with st.spinner("Analyzing document database..."):
+                    # Retrieve a snippet of text from the beginning of each document
+                    snippet_text = ""
+                    conn = sqlite3.connect("rag_knowledge_base.db")
+                    cursor = conn.cursor()
+                    for doc in indexed_docs:
+                        cursor.execute("SELECT text FROM chunks WHERE filename = ? LIMIT 2", (doc["filename"],))
+                        chunks = cursor.fetchall()
+                        snippet_text += f"\nDocument: {doc['filename']}\nSnippet: " + " ".join([c[0] for c in chunks])[:1000] + "\n"
+                    conn.close()
+                    
+                    summary_prompt = f"Provide a brief, professional executive summary describing the overall topics and contents of the following knowledge base files based on these snippets:\n{snippet_text}"
+                    
+                    summary_response = ""
+                    for chunk in handler.generate_response_stream(
+                        selected_model, 
+                        summary_prompt, 
+                        "You are an expert document manager. Provide a concise high-level summary.", 
+                        []
+                    ):
+                        summary_response += chunk
+                    
+                    st.info(f"**Knowledge Base Summary:**\n\n{summary_response}")
+                    
+    # ------------------ Column 2: Grounded RAG Chat ------------------
+    with col_chat:
+        st.subheader("💬 RAG Chat Playground")
+        
+        # Retrieval Filters & Settings
+        with st.expander("⚙️ Advanced Retrieval Parameters", expanded=False):
+            # Select target documents to query
+            all_doc_names = [d["filename"] for d in indexed_docs]
+            selected_docs = st.multiselect(
+                "Filter query to specific documents (default: all documents):",
+                all_doc_names,
+                default=[]
+            )
+            
+            col_param1, col_param2 = st.columns(2)
+            with col_param1:
+                similarity_threshold = st.slider("Similarity Threshold (Cosine)", min_value=0.0, max_value=1.0, value=0.15, step=0.05)
+            with col_param2:
+                top_k_chunks = st.slider("Max Context Chunks (k)", min_value=1, max_value=10, value=4)
+                
+            # Query Expansion feature (Creative Feature!)
+            query_expansion = st.checkbox("🔄 Enable Query Expansion (Generates search queries for improved recall)", value=False)
+            
+        if st.button("🧹 Clear Chat Memory", use_container_width=True):
+            st.session_state.rag_messages = []
+            st.rerun()
+            
+        # Display RAG chat history
+        for message in st.session_state.rag_messages:
+            with st.chat_message(message["role"]):
+                cls = "user-msg" if message["role"] == "user" else "assistant-msg"
+                st.markdown(f"<div class='{cls}'></div> {message['content']}", unsafe_allow_html=True)
+                
+                # Show retrieved chunks for assistant messages if present in session state
+                if message["role"] == "assistant" and "retrieved_chunks" in message and message["retrieved_chunks"]:
+                    with st.expander("🔍 Show Retrieved Sources Used"):
+                        for idx, chunk in enumerate(message["retrieved_chunks"]):
+                            page_lbl = f", Page {chunk['page_number']}" if chunk['page_number'] > 1 else ""
+                            st.markdown(f"**Source {idx+1}:** `{chunk['filename']}`{page_lbl} | **Similarity Score:** `{chunk['similarity']:.1%}`")
+                            st.info(chunk["text"])
+
+        # Chat Input
+        if not indexed_docs:
+            st.warning("⚠️ Please upload and process documents first to start chatting!")
+        else:
+            if prompt := st.chat_input("Ask a question about your uploaded knowledge base..."):
+                # Display user message
+                st.session_state.rag_messages.append({"role": "user", "content": prompt})
+                with st.chat_message("user"):
+                    st.markdown(f"<div class='user-msg'></div> {prompt}", unsafe_allow_html=True)
+                
+                # RAG Pipeline Steps
+                with st.spinner("Retrieving relevant context and generating response..."):
+                    # 1. Query Expansion (if selected)
+                    search_query = prompt
+                    if query_expansion:
+                        expansion_prompt = f"The user asked: '{prompt}'. Generate 2 alternative search queries or keywords that represent the core information request to maximize semantic search recall. Return ONLY the alternative queries separated by commas."
+                        expanded_terms = ""
+                        for chunk in handler.generate_response_stream(
+                            selected_model, 
+                            expansion_prompt, 
+                            "You are a search query optimizer. Return only queries.", 
+                            []
+                        ):
+                            expanded_terms += chunk
+                        # Combine original query with generated search keywords
+                        search_query = f"{prompt} {expanded_terms}"
+                        
+                    # 2. Retrieve matched chunks
+                    matched_chunks = RAGBackend.search(
+                        query_text=search_query,
+                        top_k=top_k_chunks,
+                        min_similarity=similarity_threshold,
+                        filter_filenames=selected_docs if selected_docs else None
+                    )
+                    
+                    # 3. Format context string
+                    context_str = ""
+                    if matched_chunks:
+                        for idx, chunk in enumerate(matched_chunks):
+                            page_info = f", Page {chunk['page_number']}" if chunk['page_number'] > 1 else ""
+                            context_str += f"--- SOURCE {idx+1} ({chunk['filename']}{page_info}, Similarity: {chunk['similarity']:.2%}) ---\n"
+                            context_str += f"{chunk['text']}\n\n"
+                    else:
+                        context_str = "No relevant context chunks found matching the similarity threshold."
+                        
+                    # 4. Format RAG prompt
+                    rag_system_prompt = PROMPT_RAG.format(context=context_str)
+                    
+                    # 5. Generate Response
+                    with st.chat_message("assistant"):
+                        st.markdown("<div class='assistant-msg'></div>", unsafe_allow_html=True)
+                        stream = handler.generate_response_stream(
+                            selected_model,
+                            prompt,
+                            rag_system_prompt,
+                            st.session_state.rag_messages[:-1]
+                        )
+                        response = st.write_stream(stream)
+                        
+                        # Display sources used
+                        if matched_chunks:
+                            with st.expander("🔍 Show Retrieved Sources Used"):
+                                for idx, chunk in enumerate(matched_chunks):
+                                    page_lbl = f", Page {chunk['page_number']}" if chunk['page_number'] > 1 else ""
+                                    st.markdown(f"**Source {idx+1}:** `{chunk['filename']}`{page_lbl} | **Similarity Score:** `{chunk['similarity']:.1%}`")
+                                    st.info(chunk["text"])
+                                    
+                    # Store assistant response and context chunks
+                    st.session_state.rag_messages.append({
+                        "role": "assistant",
+                        "content": response,
+                        "retrieved_chunks": matched_chunks
+                    })
+                    st.rerun()
+

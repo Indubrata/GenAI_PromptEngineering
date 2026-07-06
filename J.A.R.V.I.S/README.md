@@ -1,17 +1,15 @@
-# J.A.R.V.I.S - Autonomous Agentic AI
+# J.A.R.V.I.S - Autonomous Agentic AI & RAG Knowledge Base
 
-This project is a comprehensive submission for **Task 5: Build an Agentic AI Application**. 
-J.A.R.V.I.S has been upgraded from a standard multimodal chatbot into a fully autonomous Agentic AI that can reason, use tools, maintain memory, and perform multi-step workflows to solve real-world problems.
+This project contains submissions for **Task 5: Build an Agentic AI Application** and **Task 6: Add a RAG Application**.
+J.A.R.V.I.S has been upgraded into a comprehensive workspace featuring an autonomous ReAct AI agent and a knowledge-grounded Retrieval-Augmented Generation (RAG) system.
 
 ## What This Project Does
 
-J.A.R.V.I.S now features a powerful **Agentic Mode**, acting as an autonomous Research and Calculation Assistant. It goes far beyond the typical "Prompt -> Response" chatbot paradigm. When asked a complex question, the AI plans its approach, autonomously executes tools, gathers observations, and synthesizes a final answer.
+J.A.R.V.I.S now features two main modes:
+1. **Agentic Mode (Task 5):** An autonomous Research and Calculation Assistant using a ReAct reasoning loop to search the web, read articles, calculate math, and compile findings into downloadable PDF reports.
+2. **RAG Knowledge Base (Task 6):** A document-grounded chatbot allowing users to upload documents (PDF, DOCX, TXT, MD, CSV) and query them. It retrieves context semantically, highlights retrieved sources, handles query expansions, and generates citation-grounded answers.
+3. *(Legacy features like Standard Chat, A/B Testing, and Image Generation are still available in the sidebar!)*
 
-Key capabilities include:
-- **Autonomous Tool Usage:** Can search the web, read articles, and calculate complex math.
-- **Reasoning Loop:** Uses a custom multi-step ReAct (Reasoning and Acting) architecture.
-- **Detailed PDF Reports:** If requested (by including the word "report" in your prompt), the Agent can compile its findings into a beautifully formatted, downloadable PDF research report.
-- *(Legacy features like Standard Chat, A/B Testing, and Image Generation are still available in the sidebar!)*
 
 ## Agent Workflow (ReAct Architecture)
 
@@ -36,20 +34,48 @@ Memory is maintained across interactions to provide a seamless conversational ex
 - **Session State:** Chat history is stored persistently in Streamlit's `st.session_state.messages`.
 - **Context Injection:** On every turn of the Agent's ReAct loop, the full conversation history is injected into the LLM's system context. This allows the Agent to remember previous findings, refer back to user constraints, and build upon prior tool observations across multiple turns without losing context.
 
+## RAG Architecture and Pipeline
+
+The RAG application is fully modularized and integrated within the Streamlit workspace (`rag_backend.py` and `JARVIS.py`):
+
+1. **Document Ingestion (Multi-Format Parser):**
+   - **PDF:** Uses `pypdf` to extract text page-by-page. Pages are tracked individually so the citation system can reference page numbers (e.g., `[Document.pdf, Page 3]`).
+   - **DOCX:** Uses `python-docx` to read paragraphs and structure cells inside Word document tables.
+   - **CSV:** Uses Python's standard `csv` library to parse rows and represent tabular data as descriptive, queryable strings.
+   - **TXT/MD:** Standard UTF-8 decoding and file parsing.
+2. **Text Splitter (Chunker):**
+   - Implements a sliding-window character text splitter that maintains word boundaries, dividing documents into 800-character blocks with a 150-character overlap.
+3. **Embedding Model:**
+   - Leverages **Gemini's `models/gemini-embedding-001`** embedding model via the `google-generativeai` package to transform chunks and queries into 3072-dimensional semantic vectors.
+4. **Vector Database:**
+   - A persistent, file-backed **SQLite** database stores the document metadata (`documents` table) and chunk records (`chunks` table) alongside JSON-serialized embedding arrays.
+   - Vector similarity search computes the Cosine Similarity mathematically inside the application using **NumPy** for sub-millisecond execution over hundreds of chunks without relying on heavy external vector database binaries.
+5. **Grounded Generation and Citations:**
+   - Generates responses grounded in the retrieved chunks. The assistant presents clear inline citations and a dedicated expander showing the matching text chunks and their exact cosine similarity percentage.
+
+## RAG Features (Creative Additions)
+
+- **Query Expansion:** If enabled, the application uses the LLM to generate alternative search terms prior to semantic lookup, improving recall.
+- **Database Auto-Summary:** Analyzes snippets from the active database to generate a comprehensive topic summary of the entire knowledge base.
+- **Multi-Document Selector:** Multi-select widget to restrict queries to specific uploaded files, or search across the entire database.
+- **Similarity Score Threshold:** Adjusts the minimum cosine similarity needed to retrieve document chunks.
+
 ## How to Run It Locally
 
 1. **Clone the repository** and navigate to the project directory.
-2. **Install the required dependencies**:
+2. **Re-create and Activate the Virtual Environment (Python 3.12 Recommended):**
    ```bash
-   pip install -r requirements.txt
+   python3 -m venv --clear .venv
+   .venv/bin/pip install -r requirements.txt
    ```
-3. **Run the Streamlit application**:
+3. **Run the Streamlit application:**
    ```bash
-   streamlit run JARVIS.py
+   .venv/bin/streamlit run JARVIS.py
    ```
 
 ## How to Add Your API Keys
 
 J.A.R.V.I.S uses environment variables to ensure no API keys are hardcoded.
-1. Locate the `.env.example` file and copy it to a new file named `.env`.
-2. Open the `.env` file and fill in your keys (e.g., `GEMINI_API_KEY`, `GROQ_API_KEY`, `HUGGINGFACE_API_KEY`). The app adapts to whichever keys are present!
+1. Copy the `.env.example` file to `.env` if not already present.
+2. Fill in the keys (e.g., `GEMINI_API_KEY`, `GROQ_API_KEY`, `HUGGINGFACE_API_KEY`).
+
