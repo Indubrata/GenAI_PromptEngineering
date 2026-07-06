@@ -1,0 +1,771 @@
+import streamlit as st
+from llm_handler import LLMHandler
+from prompts import PROMPT_MODES, PROMPT_EVALUATOR_SYSTEM, PROMPT_RAG
+from intents import check_and_execute_intent
+from image_handler import ImageHandler
+from image_styles import IMAGE_STYLES, DEFAULT_NEGATIVE_PROMPT
+from agent import Agent
+from rag_backend import RAGBackend
+
+# Configure Streamlit page
+st.set_page_config(page_title="Prompt Engineering Chatbot", page_icon="🤖", layout="wide")
+
+import base64
+
+def get_base64_of_bin_file(bin_file):
+    try:
+        with open(bin_file, 'rb') as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+    except FileNotFoundError:
+        return None
+
+# Load background if it exists
+bg_base64 = get_base64_of_bin_file('/home/indubrata/.gemini/antigravity/brain/0d8f6fde-5161-4575-84a6-63ddb478f587/ui_background_1781176515768.png')
+bg_css = f"""
+    body {{
+        background-color: #000000 !important;
+        background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url("data:image/jpeg;base64,{bg_base64}");
+        background-size: contain;
+        background-position: top center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }}
+    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {{
+        background: transparent !important;
+    }}
+""" if bg_base64 else ""
+
+# Load custom icon if it exists
+icon_base64 = get_base64_of_bin_file('/home/indubrata/TechFiles/TDA_Bootcamp/AI/Week2/icon.png')
+icon_css = f"""
+    /* Hide default SVGs only in the sidebar toggle button */
+    [data-testid="collapsedControl"] svg,
+    [data-testid="stSidebarCollapsedControl"] svg,
+    [data-testid="stSidebarCollapseControl"] svg {{
+        display: none !important;
+    }}
+    
+    /* Set custom icon as background */
+    [data-testid="collapsedControl"],
+    [data-testid="stSidebarCollapsedControl"],
+    [data-testid="stSidebarCollapseControl"] {{
+        background-image: url("data:image/png;base64,{icon_base64}") !important;
+        background-size: 28px 28px !important;
+        background-repeat: no-repeat !important;
+        background-position: center !important;
+    }}
+""" if icon_base64 else ""
+
+# Inject Custom CSS
+st.markdown(f"""
+    <style>
+    {bg_css}
+    {icon_css}
+    
+    /* Move the Running indicator and Stop button to the bottom right */
+    [data-testid="stStatusWidget"] {{
+        position: fixed !important;
+        bottom: 25px !important;
+        right: 40px !important;
+        z-index: 1000 !important;
+        background-color: rgba(0,0,0,0.5);
+        border-radius: 10px;
+        padding: 5px;
+    }}
+
+    /* Global Text Color */
+    .stApp, .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp label {{
+        color: #E0F7FA !important;
+    }}
+
+    /* Chat Messages base styling */
+    [data-testid="stChatMessage"] {{
+        border-radius: 15px !important;
+        padding: 15px !important;
+        margin-bottom: 15px !important;
+        color: #E0F7FA !important;
+        width: fit-content;
+        max-width: 80%;
+    }}
+
+    /* Right-align User Messages (using the injected .user-msg div) */
+    [data-testid="stChatMessage"]:has(.user-msg) {{
+        flex-direction: row-reverse;
+        margin-left: auto !important;
+        background-color: rgba(10, 40, 50, 0.85) !important;
+        border: 1px solid #005f73 !important;
+        border-bottom-right-radius: 0px !important;
+    }}
+
+    /* Left-align Assistant Messages (using the injected .assistant-msg div) */
+    [data-testid="stChatMessage"]:has(.assistant-msg) {{
+        margin-right: auto !important;
+        background-color: rgba(0, 200, 220, 0.2) !important;
+        border: 1px solid #00ACC1 !important;
+        border-bottom-left-radius: 0px !important;
+    }}
+
+    /* Sidebar Styling - Aggressively targeting all inner wrappers */
+    [data-testid="stSidebar"],
+    [data-testid="stSidebar"] > div:first-child,
+    [data-testid="stSidebarContent"] {{
+        background-color: transparent !important;
+        border-right: 1px solid rgba(0, 172, 193, 0.3) !important;
+    }}
+    
+    /* Top-Right Menu / Popovers (if referring to the 3-dots menu) */
+    ul[data-testid="stMenu"], 
+    div[role="menu"], div[role="dialog"] {{
+        background-color: rgba(0, 15, 20, 0.4) !important;
+        backdrop-filter: blur(10px) !important;
+        border: 1px solid #00ACC1 !important;
+        color: #E0F7FA !important;
+    }}
+    
+    /* Fully transparent chat input bar */
+    [data-testid="stChatInput"], .stChatInputContainer, div[data-testid="stChatInput"] {{
+        background-color: transparent !important;
+        background: transparent !important;
+        backdrop-filter: none !important;
+        border: 1px solid #00ACC1 !important;
+        border-radius: 20px !important;
+    }}
+    [data-testid="stChatInput"] textarea, .stChatInputContainer textarea {{
+        color: #E0F7FA !important;
+        background-color: transparent !important;
+    }}
+
+    /* Selectboxes and text areas */
+    .stSelectbox > div > div, .stTextArea textarea {{
+        background-color: transparent !important;
+        border: 1px solid #00ACC1 !important;
+        color: #E0F7FA !important;
+    }}
+    
+    /* Shift main content exactly 38px down from previous state */
+    .block-container {{
+        margin-top: 1px !important;
+        padding-top: 2rem !important;
+    }}
+    
+    /* Remove default solid background behind the chat input */
+    .stApp > header {{
+        background: transparent !important;
+    }}
+    
+    /* Bottom padding container for chat input */
+    [data-testid="stBottomBlockContainer"],
+    [data-testid="stBottom"],
+    .stBottom {{
+        background: transparent !important;
+        background-color: transparent !important;
+    }}
+    </style>
+""", unsafe_allow_html=True)
+
+
+@st.cache_resource
+def get_llm_handler():
+    return LLMHandler()
+
+@st.cache_resource
+def get_image_handler():
+    try:
+        return ImageHandler()
+    except ValueError:
+        return None
+
+handler = get_llm_handler()
+available_models = handler.get_available_models()
+image_handler = get_image_handler()
+
+# Initialize session state for memory and app state
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "arena_results" not in st.session_state:
+    st.session_state.arena_results = []
+if "image_gallery" not in st.session_state:
+    st.session_state.image_gallery = []
+if "rag_messages" not in st.session_state:
+    st.session_state.rag_messages = []
+
+def export_chat(messages):
+    text = "# Chat History\n\n"
+    for m in messages:
+        role = "User" if m["role"] == "user" else "Assistant"
+        text += f"**{role}:**\n{m['content']}\n\n"
+    return text
+
+# Sidebar configuration
+with st.sidebar:
+    st.title("J.A.R.V.I.S")
+    
+    app_mode = st.radio("App Mode", ["Agentic Mode", "Standard Chat", "Model A/B Arena", "Prompt Evaluator", "🖼️ Image Generation", "📚 RAG Knowledge Base"])
+    
+    st.divider()
+    
+    st.markdown("### Export")
+    if st.session_state.messages:
+        chat_str = export_chat(st.session_state.messages)
+        st.download_button(
+            label="Download Chat History",
+            data=chat_str,
+            file_name="chat_history.md",
+            mime="text/markdown"
+        )
+    
+    st.divider()
+    if not available_models:
+        st.error("No models available. Please set your API keys in the .env file.")
+        st.stop()
+
+# Inject the App Name into the top ribbon bar
+st.markdown(f"""
+    <div style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); z-index: 100000; font-size: 1.5rem; font-weight: 800; color: #00E5FF; letter-spacing: 3px;">
+        J.A.R.V.I.S
+    </div>
+""", unsafe_allow_html=True)
+
+# Helper to get the current system prompt
+def get_system_prompt(mode_selection):
+    if mode_selection == "Custom":
+        return st.text_area("Enter your custom system prompt:", value="You are a helpful assistant.", height=100)
+    return PROMPT_MODES[mode_selection]
+
+
+if app_mode == "Agentic Mode":
+    st.markdown("### Autonomous AI Agent")
+    st.markdown("The agent can use tools like Web Search, Webpage Fetcher, and an advanced SymPy Calculator to solve complex problems and answer questions in multiple steps.")
+    
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        selected_model = st.selectbox("Select Model", available_models)
+    with col2:
+        if st.button("Clear Memory", use_container_width=True):
+            st.session_state.messages = []
+            st.rerun()
+            
+    # Display chat history
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            cls = "user-msg" if message["role"] == "user" else "assistant-msg"
+            if message["role"] == "assistant":
+                if "agent_steps" in message:
+                    for step in message["agent_steps"]:
+                        with st.expander(f"⚙️ Tool Call: {step['action']}"):
+                            st.markdown(f"**Thought:** {step['thought']}")
+                            st.markdown(f"**Action Input:** {step['action_input']}")
+                            st.markdown(f"**Result:** {step['result'][:500]}..." if len(step['result']) > 500 else f"**Result:** {step['result']}")
+            st.markdown(f"<div class='{cls}'></div> {message['content']}", unsafe_allow_html=True)
+
+    # Chat input
+    if prompt := st.chat_input("Ask a complex question requiring research or calculation..."):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(f"<div class='user-msg'></div> {prompt}", unsafe_allow_html=True)
+            
+        with st.chat_message("assistant"):
+            st.markdown("<div class='assistant-msg'></div>", unsafe_allow_html=True)
+            agent = Agent(handler, selected_model)
+            
+            agent_steps = []
+            final_content = ""
+            
+            with st.status("Agent is working...", expanded=True) as status:
+                for step in agent.run(prompt, st.session_state.messages[:-1]):
+                    if step["type"] == "tool_call":
+                        st.write(f"🤔 **Thinking:** {step['thought']}")
+                        st.write(f"🛠️ **Using Tool:** `{step['action']}` with input: `{step['action_input']}`")
+                        agent_steps.append({
+                            "thought": step['thought'],
+                            "action": step['action'],
+                            "action_input": step['action_input'],
+                            "result": "Pending..."
+                        })
+                    elif step["type"] == "tool_result":
+                        res = str(step['content'])
+                        st.write(f"✅ **Result:** {res[:200]}..." if len(res) > 200 else f"✅ **Result:** {res}")
+                        if agent_steps:
+                            agent_steps[-1]["result"] = res
+                    elif step["type"] == "final_answer":
+                        st.write(f"💡 **Final Thought:** {step['thought']}")
+                        final_content = step['content']
+                    elif step["type"] == "error":
+                        st.error(f"Error: {step['content']}")
+                        final_content = f"An error occurred: {step['content']}"
+                status.update(label="Agent Finished!", state="complete", expanded=False)
+                
+            st.markdown(final_content)
+            
+            st.session_state.messages.append({
+                "role": "assistant", 
+                "content": final_content,
+                "agent_steps": agent_steps
+            })
+            st.rerun()
+
+    # Report Generation
+    def wants_report(messages):
+        if not messages: return False
+        for msg in reversed(messages):
+            if msg['role'] == 'user':
+                return 'report' in msg['content'].lower()
+        return False
+        
+    if st.session_state.messages and len(st.session_state.messages) > 1 and wants_report(st.session_state.messages):
+        st.divider()
+        st.markdown("#### Generate Detailed Research Report")
+        st.markdown("Compile the recent findings into a downloadable PDF report.")
+        if st.button("Generate PDF Report", type="primary"):
+            with st.spinner("Compiling and generating PDF..."):
+                agent = Agent(handler, selected_model)
+                history_text = ""
+                for msg in st.session_state.messages[-4:]:  # Send recent context
+                    if msg['role'] == 'assistant':
+                        history_text += f"Assistant: {msg['content']}\n"
+                    else:
+                        history_text += f"User: {msg['content']}\n"
+                        
+                pdf_bytes, report_md = agent.generate_pdf_report(history_text)
+                
+                if pdf_bytes:
+                    st.success("Report generated successfully!")
+                    st.download_button(
+                        label="Download PDF Report",
+                        data=pdf_bytes,
+                        file_name="Research_Report.pdf",
+                        mime="application/pdf"
+                    )
+                else:
+                    st.error("Failed to generate PDF.")
+
+elif app_mode == "Standard Chat":    
+    col1, col2 = st.columns(2)
+    with col1:
+        selected_model = st.selectbox("Select Model", available_models)
+    with col2:
+        prompt_mode = st.selectbox("Prompt Mode", list(PROMPT_MODES.keys()))
+        
+    system_prompt = get_system_prompt(prompt_mode)
+    
+    # Display chat history
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            cls = "user-msg" if message["role"] == "user" else "assistant-msg"
+            st.markdown(f"<div class='{cls}'></div> {message['content']}", unsafe_allow_html=True)
+
+    # Chat input
+    if prompt := st.chat_input("Type your message here..."):
+        # Display user message
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(f"<div class='user-msg'></div> {prompt}", unsafe_allow_html=True)
+            
+        # First, check for action intents
+        intent_result = check_and_execute_intent(prompt, handler, selected_model)
+        if intent_result:
+            with st.chat_message("assistant"):
+                st.markdown(f"<div class='assistant-msg'></div> {intent_result}", unsafe_allow_html=True)
+            st.session_state.messages.append({"role": "assistant", "content": intent_result})
+        else:
+            # Generate LLM response
+            with st.chat_message("assistant"):
+                # Use st.write_stream for the typewriter effect
+                st.markdown("<div class='assistant-msg'></div>", unsafe_allow_html=True)
+                stream = handler.generate_response_stream(selected_model, prompt, system_prompt, st.session_state.messages[:-1])
+                response = st.write_stream(stream)
+            
+            # Store assistant response
+            st.session_state.messages.append({"role": "assistant", "content": response})
+
+elif app_mode == "Model A/B Arena":
+    st.markdown("Compare how different models respond to the **exact same prompt** and system instructions.")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        model_a = st.selectbox("Model A", available_models, index=0)
+    with col2:
+        model_b = st.selectbox("Model B", available_models, index=1 if len(available_models) > 1 else 0)
+        
+    prompt_mode = st.selectbox("Prompt Mode", list(PROMPT_MODES.keys()))
+    system_prompt = get_system_prompt(prompt_mode)
+    
+    if prompt := st.chat_input("Enter a prompt to test both models..."):
+        st.markdown(f"**User:** {prompt}")
+        
+        # We don't use history for the arena to keep the test clean
+        empty_history = []
+        
+        res_col1, res_col2 = st.columns(2)
+        
+        response_a = ""
+        response_b = ""
+        
+        with res_col1:
+            st.subheader(f"Model A: {model_a}")
+            stream_a = handler.generate_response_stream(model_a, prompt, system_prompt, empty_history)
+            response_a = st.write_stream(stream_a)
+            
+        with res_col2:
+            st.subheader(f"Model B: {model_b}")
+            stream_b = handler.generate_response_stream(model_b, prompt, system_prompt, empty_history)
+            response_b = st.write_stream(stream_b)
+            
+        st.session_state.arena_results.append({
+            "prompt": prompt,
+            "model_a": model_a,
+            "model_b": model_b,
+            "response_a": response_a,
+            "response_b": response_b
+        })
+        
+    # Voting Mechanism (Display at the bottom)
+    if st.session_state.arena_results:
+        st.divider()
+        st.markdown("### Vote for the Winner")
+        vote_col1, vote_col2, vote_col3 = st.columns(3)
+        with vote_col1:
+            if st.button("👈 Model A is better", use_container_width=True):
+                st.success("Voted for Model A!")
+        with vote_col2:
+            if st.button("🤝 It's a Tie", use_container_width=True):
+                st.info("Voted Tie!")
+        with vote_col3:
+            if st.button("Model B is better 👉", use_container_width=True):
+                st.success("Voted for Model B!")
+
+elif app_mode == "Prompt Evaluator":
+    st.markdown("Instead of answering your question, the AI will evaluate your prompt and help you improve it.")
+    
+    evaluator_model = st.selectbox("Evaluator Model", available_models)
+    
+    if prompt := st.chat_input("Enter the prompt you want to evaluate..."):
+        st.markdown("### Your Original Prompt")
+        st.info(prompt)
+        
+        st.markdown("### Evaluation")
+        stream = handler.generate_response_stream(evaluator_model, prompt, PROMPT_EVALUATOR_SYSTEM, [])
+        st.write_stream(stream)
+
+elif app_mode == "🖼️ Image Generation":
+    st.markdown("Enter a prompt and select an art style to generate an image.")
+    
+    provider = st.radio("Image Engine Provider", ["Hugging Face (Free)", "Stability AI (Core)"], horizontal=True)
+    if provider == "Hugging Face (Free)" and not image_handler.hf_api_key:
+        st.warning("HUGGINGFACE_API_KEY is missing from .env. The API may not work.")
+    if provider == "Stability AI (Core)" and not image_handler.stability_api_key:
+        st.warning("STABILITY_API_KEY is missing from .env. The API may not work.")
+        
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        img_prompt = st.text_input("Describe the image you want to see:")
+    with col2:
+        img_style = st.selectbox("Art Style", list(IMAGE_STYLES.keys()))
+        
+    with st.expander("Advanced Settings"):
+        col3, col4 = st.columns(2)
+        with col3:
+            img_size = st.radio("Image Ratio", ["Square (1024x1024)", "Landscape (1024x576 / 1792x1024)", "Portrait (576x1024 / 1024x1792)"])
+        with col4:
+            negative_prompt = st.text_area("Negative Prompt (What to avoid):", value=DEFAULT_NEGATIVE_PROMPT)
+            
+    if st.button("Generate Image", type="primary", use_container_width=True):
+        if not img_prompt:
+            st.warning("Please enter a prompt first.")
+        else:
+            with st.spinner(f"Generating image with {provider}... This may take a few seconds."):
+                try:
+                    # Apply style modifier
+                    style_modifier = IMAGE_STYLES.get(img_style, "")
+                    final_prompt = f"{img_prompt}, {style_modifier}" if style_modifier and style_modifier != "" else img_prompt
+                    
+                    # Parse dimensions
+                    w, h = 1024, 1024
+                    if "Landscape" in img_size:
+                        w, h = 1024, 576
+                    elif "Portrait" in img_size:
+                        w, h = 576, 1024
+                        
+                    # Extract the pure provider name
+                    prov_name = "Stability AI (Core)" if "Stability" in provider else "Hugging Face"
+                        
+                    # Generate
+                    image = image_handler.generate_image(prompt=final_prompt, provider=prov_name, width=w, height=h)
+                    
+                    # Save to gallery
+                    st.session_state.image_gallery.insert(0, {
+                        "prompt": img_prompt,
+                        "style": img_style,
+                        "final_prompt": final_prompt,
+                        "image": image
+                    })
+                    
+                except Exception as e:
+                    st.error(f"Failed to generate image: {str(e)}")
+                    
+    # Display Gallery
+    if st.session_state.image_gallery:
+        st.divider()
+        st.markdown("### Image Gallery")
+        
+        # Display the most recent image prominently
+        latest = st.session_state.image_gallery[0]
+        st.image(latest["image"], caption=f"{latest['prompt']} ({latest['style']})", use_container_width=True)
+        
+        # Allow downloading
+        import io
+        img_byte_arr = io.BytesIO()
+        latest["image"].save(img_byte_arr, format='PNG')
+        img_bytes = img_byte_arr.getvalue()
+        
+        st.download_button(
+            label="Download Latest Image",
+            data=img_bytes,
+            file_name="generated_image.png",
+            mime="image/png"
+        )
+        
+        # Show older images in smaller columns
+        if len(st.session_state.image_gallery) > 1:
+            st.markdown("#### Previous Generations")
+            cols = st.columns(3)
+            for i, item in enumerate(st.session_state.image_gallery[1:]):
+                col = cols[i % 3]
+                with col:
+                    st.image(item["image"], caption=item["prompt"], use_container_width=True)
+
+elif app_mode == "📚 RAG Knowledge Base":
+    import sqlite3  # Import sqlite3 here for safety
+    st.markdown("### 📚 Retrieval-Augmented Generation (RAG) Knowledge Base")
+    st.markdown("Upload files and ask questions grounded strictly in your custom knowledge base documents.")
+    
+    # Check if Gemini is available
+    selected_model = "Gemini 3.5 Flash"
+    if selected_model not in available_models:
+        selected_model = available_models[0] if available_models else None
+        
+    # Split UI into side-by-side columns
+    col_manage, col_chat = st.columns([1, 1])
+    
+    # ------------------ Column 1: Document Management ------------------
+    with col_manage:
+        st.subheader("📂 Manage Knowledge Base")
+        
+        # Multiple file uploader
+        uploaded_files = st.file_uploader(
+            "Upload Documents (PDF, DOCX, TXT, MD, CSV)",
+            type=["pdf", "docx", "txt", "md", "csv"],
+            accept_multiple_files=True
+        )
+        
+        if uploaded_files:
+            if st.button("⚡ Process and Index Uploaded Documents", use_container_width=True, type="primary"):
+                for uploaded_file in uploaded_files:
+                    with st.spinner(f"Indexing {uploaded_file.name}..."):
+                        file_bytes = uploaded_file.read()
+                        res = RAGBackend.add_document(
+                            filename=uploaded_file.name,
+                            file_bytes=file_bytes,
+                            file_size=len(file_bytes)
+                        )
+                        if res.get("success"):
+                            st.success(f"Successfully indexed {uploaded_file.name} ({res['chunks']} chunks)")
+                        else:
+                            st.error(f"Error processing {uploaded_file.name}: {res.get('error')}")
+                st.rerun()
+                
+        # List indexed documents
+        indexed_docs = RAGBackend.list_documents()
+        
+        if indexed_docs:
+            st.markdown(f"**Currently Indexed Documents ({len(indexed_docs)}):**")
+            
+            # Format documentation metadata table
+            doc_data = []
+            for doc in indexed_docs:
+                size_kb = doc['file_size_bytes'] / 1024.0
+                doc_data.append({
+                    "Document Name": doc["filename"],
+                    "Type": doc["file_type"],
+                    "Chunks": doc["total_chunks"],
+                    "Size": f"{size_kb:.1f} KB"
+                })
+            st.dataframe(doc_data, use_container_width=True)
+            
+            # Options to delete
+            col_del1, col_del2 = st.columns(2)
+            with col_del1:
+                doc_to_delete = st.selectbox("Select document to delete:", [d["filename"] for d in indexed_docs])
+                if st.button("🗑️ Delete Selected Document", use_container_width=True):
+                    if RAGBackend.delete_document(doc_to_delete):
+                        st.success(f"Deleted {doc_to_delete}")
+                        st.rerun()
+                    else:
+                        st.error("Failed to delete document")
+            with col_del2:
+                st.markdown("<br>", unsafe_allow_html=True)
+                if st.button("🚨 Clear Entire Database", use_container_width=True, type="secondary"):
+                    if RAGBackend.clear_database():
+                        st.success("Database cleared!")
+                        st.rerun()
+                    else:
+                        st.error("Failed to clear database")
+        else:
+            st.info("No documents uploaded yet. Upload a document above to get started!")
+
+        # Creative Feature: Database Statistics & Summary
+        if indexed_docs:
+            st.divider()
+            st.subheader("📊 Knowledge Base Statistics")
+            total_chunks = sum([d["total_chunks"] for d in indexed_docs])
+            total_size_kb = sum([d["file_size_bytes"] for d in indexed_docs]) / 1024.0
+            
+            stat_col1, stat_col2 = st.columns(2)
+            with stat_col1:
+                st.metric("Total Chunks", total_chunks)
+            with stat_col2:
+                st.metric("Total Size", f"{total_size_kb:.1f} KB")
+
+            # Generate knowledge base summary button using LLM
+            if st.button("📝 Generate Knowledge Base Summary", use_container_width=True):
+                with st.spinner("Analyzing document database..."):
+                    # Retrieve a snippet of text from the beginning of each document
+                    snippet_text = ""
+                    conn = sqlite3.connect("rag_knowledge_base.db")
+                    cursor = conn.cursor()
+                    for doc in indexed_docs:
+                        cursor.execute("SELECT text FROM chunks WHERE filename = ? LIMIT 2", (doc["filename"],))
+                        chunks = cursor.fetchall()
+                        snippet_text += f"\nDocument: {doc['filename']}\nSnippet: " + " ".join([c[0] for c in chunks])[:1000] + "\n"
+                    conn.close()
+                    
+                    summary_prompt = f"Provide a brief, professional executive summary describing the overall topics and contents of the following knowledge base files based on these snippets:\n{snippet_text}"
+                    
+                    summary_response = ""
+                    for chunk in handler.generate_response_stream(
+                        selected_model, 
+                        summary_prompt, 
+                        "You are an expert document manager. Provide a concise high-level summary.", 
+                        []
+                    ):
+                        summary_response += chunk
+                    
+                    st.info(f"**Knowledge Base Summary:**\n\n{summary_response}")
+                    
+    # ------------------ Column 2: Grounded RAG Chat ------------------
+    with col_chat:
+        st.subheader("💬 RAG Chat Playground")
+        
+        # Retrieval Filters & Settings
+        with st.expander("⚙️ Advanced Retrieval Parameters", expanded=False):
+            # Select target documents to query
+            all_doc_names = [d["filename"] for d in indexed_docs]
+            selected_docs = st.multiselect(
+                "Filter query to specific documents (default: all documents):",
+                all_doc_names,
+                default=[]
+            )
+            
+            col_param1, col_param2 = st.columns(2)
+            with col_param1:
+                similarity_threshold = st.slider("Similarity Threshold (Cosine)", min_value=0.0, max_value=1.0, value=0.15, step=0.05)
+            with col_param2:
+                top_k_chunks = st.slider("Max Context Chunks (k)", min_value=1, max_value=10, value=4)
+                
+            # Query Expansion feature (Creative Feature!)
+            query_expansion = st.checkbox("🔄 Enable Query Expansion (Generates search queries for improved recall)", value=False)
+            
+        if st.button("🧹 Clear Chat Memory", use_container_width=True):
+            st.session_state.rag_messages = []
+            st.rerun()
+            
+        # Display RAG chat history
+        for message in st.session_state.rag_messages:
+            with st.chat_message(message["role"]):
+                cls = "user-msg" if message["role"] == "user" else "assistant-msg"
+                st.markdown(f"<div class='{cls}'></div> {message['content']}", unsafe_allow_html=True)
+                
+                # Show retrieved chunks for assistant messages if present in session state
+                if message["role"] == "assistant" and "retrieved_chunks" in message and message["retrieved_chunks"]:
+                    with st.expander("🔍 Show Retrieved Sources Used"):
+                        for idx, chunk in enumerate(message["retrieved_chunks"]):
+                            page_lbl = f", Page {chunk['page_number']}" if chunk['page_number'] > 1 else ""
+                            st.markdown(f"**Source {idx+1}:** `{chunk['filename']}`{page_lbl} | **Similarity Score:** `{chunk['similarity']:.1%}`")
+                            st.info(chunk["text"])
+
+        # Chat Input
+        if not indexed_docs:
+            st.warning("⚠️ Please upload and process documents first to start chatting!")
+        else:
+            if prompt := st.chat_input("Ask a question about your uploaded knowledge base..."):
+                # Display user message
+                st.session_state.rag_messages.append({"role": "user", "content": prompt})
+                with st.chat_message("user"):
+                    st.markdown(f"<div class='user-msg'></div> {prompt}", unsafe_allow_html=True)
+                
+                # RAG Pipeline Steps
+                with st.spinner("Retrieving relevant context and generating response..."):
+                    # 1. Query Expansion (if selected)
+                    search_query = prompt
+                    if query_expansion:
+                        expansion_prompt = f"The user asked: '{prompt}'. Generate 2 alternative search queries or keywords that represent the core information request to maximize semantic search recall. Return ONLY the alternative queries separated by commas."
+                        expanded_terms = ""
+                        for chunk in handler.generate_response_stream(
+                            selected_model, 
+                            expansion_prompt, 
+                            "You are a search query optimizer. Return only queries.", 
+                            []
+                        ):
+                            expanded_terms += chunk
+                        # Combine original query with generated search keywords
+                        search_query = f"{prompt} {expanded_terms}"
+                        
+                    # 2. Retrieve matched chunks
+                    matched_chunks = RAGBackend.search(
+                        query_text=search_query,
+                        top_k=top_k_chunks,
+                        min_similarity=similarity_threshold,
+                        filter_filenames=selected_docs if selected_docs else None
+                    )
+                    
+                    # 3. Format context string
+                    context_str = ""
+                    if matched_chunks:
+                        for idx, chunk in enumerate(matched_chunks):
+                            page_info = f", Page {chunk['page_number']}" if chunk['page_number'] > 1 else ""
+                            context_str += f"--- SOURCE {idx+1} ({chunk['filename']}{page_info}, Similarity: {chunk['similarity']:.2%}) ---\n"
+                            context_str += f"{chunk['text']}\n\n"
+                    else:
+                        context_str = "No relevant context chunks found matching the similarity threshold."
+                        
+                    # 4. Format RAG prompt
+                    rag_system_prompt = PROMPT_RAG.format(context=context_str)
+                    
+                    # 5. Generate Response
+                    with st.chat_message("assistant"):
+                        st.markdown("<div class='assistant-msg'></div>", unsafe_allow_html=True)
+                        stream = handler.generate_response_stream(
+                            selected_model,
+                            prompt,
+                            rag_system_prompt,
+                            st.session_state.rag_messages[:-1]
+                        )
+                        response = st.write_stream(stream)
+                        
+                        # Display sources used
+                        if matched_chunks:
+                            with st.expander("🔍 Show Retrieved Sources Used"):
+                                for idx, chunk in enumerate(matched_chunks):
+                                    page_lbl = f", Page {chunk['page_number']}" if chunk['page_number'] > 1 else ""
+                                    st.markdown(f"**Source {idx+1}:** `{chunk['filename']}`{page_lbl} | **Similarity Score:** `{chunk['similarity']:.1%}`")
+                                    st.info(chunk["text"])
+                                    
+                    # Store assistant response and context chunks
+                    st.session_state.rag_messages.append({
+                        "role": "assistant",
+                        "content": response,
+                        "retrieved_chunks": matched_chunks
+                    })
+                    st.rerun()
+
