@@ -1,0 +1,96 @@
+.specular-button {
+  --sb-radius: 18px;
+  --sb-tint: var(--sb-tint-theme, #ffffff);
+  --sb-tint-opacity: 0.08;
+  --sb-blur: 0px;
+  /* Use the per-theme text colour defined in variables.css */
+  --sb-text-color: var(--sb-text-theme, #1a1a2e);
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Visible border in every theme */
+  border: 1.5px solid var(--sb-line-theme, #b87333);
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  color: var(--sb-text-color);
+  background: color-mix(in srgb, var(--sb-tint) calc(var(--sb-tint-opacity) * 100%), transparent);
+  border-radius: var(--sb-radius);
+  backdrop-filter: blur(var(--sb-blur));
+  -webkit-backdrop-filter: blur(var(--sb-blur));
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--sb-tint-theme, #fff) 12%, transparent),
+    0 6px 20px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.specular-button:hover {
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--sb-tint-theme, #fff) 20%, transparent),
+    0 10px 28px rgba(0, 0, 0, 0.22);
+}
+
+.specular-button:active {
+  transform: scale(0.97);
+}
+
+.specular-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--sb-text-color) 60%, transparent);
+  outline-offset: 3px;
+}
+
+.specular-button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.specular-button:disabled:active {
+  transform: none;
+}
+
+.specular-button--sm {
+  font-size: 0.85rem;
+  padding: 10px 22px;
+}
+
+.specular-button--md {
+  font-size: 1rem;
+  padding: 14px 30px;
+}
+
+.specular-button--lg {
+  font-size: 1.15rem;
+  padding: 18px 40px;
+}
+
+/* Canvas extends past the button so the rim glow can bleed outside the edge */
+.specular-button__fx {
+  position: absolute;
+  inset: -20px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.specular-button__fx canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.specular-button__label {
+  position: relative;
+  z-index: 2;
+}
+
+/* Reduced motion fallback: static gradient border instead of WebGL */
+@media (prefers-reduced-motion: reduce) {
+  .specular-button {
+    border: 1.5px solid var(--sb-line-theme, var(--accent-copper));
+  }
+}

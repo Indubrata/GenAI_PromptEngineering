@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Phase 10B: User Authentication (Ready for JWT integration)
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String // Hashed
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  resumes   Resume[]
+}
+
+// Phase 9: Resume Storage
+model Resume {
+  id          String   @id @default(uuid())
+  title       String
+  targetRole  String?
+  targetDesc  String?
+  atsScore    Int?
+  
+  // Stored as JSONB so the AI Gateway output maps perfectly to the DB
+  content     Json     
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationship (Optional for Phase 10A Anonymous sessions, required for 10B)
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

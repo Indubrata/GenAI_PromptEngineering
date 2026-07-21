@@ -1,0 +1,38 @@
+.theme-toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  overflow: hidden;
+  transition: background var(--duration-normal) var(--ease-out-quart),
+              border-color var(--duration-normal) var(--ease-out-quart);
+}
+
+.theme-toggle:hover {
+  background: var(--accent-gold-soft);
+  border-color: var(--accent-gold);
+}
+
+.theme-toggle__icon {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transform: scale(0) rotate(-180deg);
+  opacity: 0;
+  transition: transform var(--duration-normal) var(--ease-out-expo),
+              opacity var(--duration-normal) var(--ease-out-expo);
+}
+
+.theme-toggle__icon--active {
+  transform: scale(1) rotate(0deg);
+  opacity: 1;
+  color: var(--accent-gold);
+}

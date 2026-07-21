@@ -1,0 +1,187 @@
+PAGE LOG: [vite] connecting...
+PAGE LOG: [vite] connected.
+PAGE LOG: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+PAGE LOG: Failed to decode downloaded font: http://localhost:5173/fonts/deltha/Deltha.woff2
+PAGE LOG: OTS parsing error: invalid sfntVersion: 1008821359
+PAGE LOG: null
+Vertex Shader
+1: 
+2:   attribute vec3 position;
+3:   attribute vec3 random;
+4:   
+5:   uniform mat4 modelViewMatrix;
+6:   uniform mat4 projectionMatrix;
+7:   uniform float uTime;
+8:   
+9:   varying vec3 vColor;
+10:   
+11:   void main() {
+12:     // Copper/gold particle colors based on random attribute
+13:     vec3 color1 = vec3(0.72, 0.12, 0.80); // Gold
+14:     vec3 color2 = vec3(0.62, 0.14, 0.55); // Copper
+15:     vColor = mix(color1, color2, random.x);
+16:     
+17:     vec3 pos = position;
+18:     // Gentle floating motion
+19:     pos.y += sin(uTime * 0.2 + random.y * 6.28) * 2.0;
+20:     pos.x += cos(uTime * 0.15 + random.z * 6.28) * 1.5;
+21:     
+22:     vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+23:     // Dynamic size scaling by distance
+24:     gl_PointSize = (12.0 * random.x + 4.0) * (30.0 / -mvPosition.z);
+25:     gl_Position = projectionMatrix * mvPosition;
+26:   }
+27: 
+PAGE LOG: null
+Fragment Shader
+1: 
+2:   precision highp float;
+3:   varying vec3 vColor;
+4:   
+5:   void main() {
+6:     // Soft circular particle with glow
+7:     vec2 cxy = 2.0 * gl_PointCoord - 1.0;
+8:     float r = dot(cxy, cxy);
+9:     if (r > 1.0) discard;
+10:     
+11:     // Convert OKLCH to RGB approximation for OGL
+12:     // This is a rough mapping just for the glow effect
+13:     vec3 baseCol = vec3(1.0, 0.8, 0.4); 
+14:     
+15:     float alpha = (1.0 - r) * 0.6;
+16:     gl_FragColor = vec4(baseCol, alpha);
+17:   }
+18: 
+PAGE LOG: 
+PAGE LOG: Failed to decode downloaded font: http://localhost:5173/fonts/deltha/Deltha.woff2
+PAGE LOG: OTS parsing error: invalid sfntVersion: 1008821359
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE LOG: Failed to decode downloaded font: http://localhost:5173/fonts/deltha/Deltha.woff
+PAGE LOG: OTS parsing error: invalid sfntVersion: 1008821359
+PAGE LOG: Failed to decode downloaded font: http://localhost:5173/fonts/deltha/Deltha.woff
+PAGE LOG: OTS parsing error: invalid sfntVersion: 1008821359
+PAGE LOG: [GroupMarkerNotSet(crbug.com/242999)!:327C002D30A0]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content.
+PAGE LOG: [GroupMarkerNotSet(crbug.com/242999)!:327C002D60A0]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content.
+PAGE LOG: [GroupMarkerNotSet(crbug.com/242999)!:327C002D90A0]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content.
+PAGE LOG: Failed to decode downloaded font: http://localhost:5173/fonts/deltha/Deltha.ttf
+PAGE LOG: OTS parsing error: invalid sfntVersion: 1008821359
+PAGE LOG: Failed to decode downloaded font: http://localhost:5173/fonts/deltha/Deltha.ttf
+PAGE LOG: OTS parsing error: invalid sfntVersion: 1008821359
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE LOG: WebGL: CONTEXT_LOST_WEBGL: loseContext: context lost
+PAGE LOG: WebGL: CONTEXT_LOST_WEBGL: loseContext: context lost
+PAGE LOG: WebGL: CONTEXT_LOST_WEBGL: loseContext: context lost
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)
+PAGE ERROR: Cannot read properties of undefined (reading 'forEach')
+Program.use (http://localhost:5173/node_modules/.vite/deps/ogl.js?v=b9aea093:807:25)

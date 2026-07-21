@@ -1,0 +1,104 @@
+.reviews-section {
+  padding: var(--space-section) 0;
+  overflow: hidden;
+  position: relative;
+  /* Transparent so the landing-page aurora shows through */
+  background-color: transparent;
+}
+
+
+.reviews__header {
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto var(--space-8);
+}
+
+.reviews__title {
+  font-family: var(--font-display);
+  color: var(--text-primary);
+  margin-bottom: var(--space-3);
+}
+
+.reviews__subtitle {
+  color: var(--text-secondary);
+  font-size: var(--text-lg);
+  margin: 0 auto;
+}
+
+.reviews__marquee-container {
+  position: relative;
+  width: 100vw;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  display: flex;
+  overflow: hidden;
+  /* Fade edges */
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+
+.reviews__marquee {
+  display: flex;
+  gap: var(--space-6);
+  padding: var(--space-4) 0;
+  width: max-content;
+}
+
+.review-card {
+  width: 400px;
+  padding: var(--space-6);
+  border-radius: var(--radius-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  flex-shrink: 0;
+}
+
+.review-card__header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.review-card__avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background: var(--accent-copper-soft);
+  color: var(--accent-copper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: var(--text-xl);
+}
+
+.review-card__name {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.review-card__role {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.review-card__rating {
+  display: flex;
+  gap: 2px;
+}
+
+.review-card__text {
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  line-height: var(--leading-relaxed);
+  font-style: italic;
+  margin: 0;
+}

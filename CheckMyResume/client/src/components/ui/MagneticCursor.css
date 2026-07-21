@@ -1,0 +1,49 @@
+/* Hide default cursor only if not on touch device and not requesting reduced motion */
+@media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  body {
+    cursor: none;
+  }
+  
+  /* Need to ensure hoverable elements also hide their cursor to avoid flickering */
+  a, button, input, textarea, select, .upload__dropzone, .faq__item {
+    cursor: none !important;
+  }
+}
+
+.cursor-dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  background-color: var(--accent-gold);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%); /* Center on coordinates */
+  mix-blend-mode: difference; /* Adds a nice effect over different backgrounds */
+}
+
+.cursor-outline {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--accent-copper-soft);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%, -50%); /* Center on coordinates */
+  transition: width 0.2s ease, height 0.2s ease;
+}
+
+/* Hide custom cursor on mobile/touch devices entirely */
+@media (max-width: 768px) {
+  .cursor-dot, .cursor-outline {
+    display: none;
+  }
+  body {
+    cursor: auto;
+  }
+}
