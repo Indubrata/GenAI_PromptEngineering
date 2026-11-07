@@ -1,12 +1,11 @@
 import { Server } from 'socket.io';
-import { redisClient } from './redis.js';
 
 let io;
 
 export const initSocket = (httpServer) => {
   io = new Server(httpServer, {
     cors: {
-      origin: process.env.CLIENT_URL || 'http://localhost:5173',
+      origin: (process.env.CLIENT_URL || 'http://localhost:5173,http://127.0.0.1:5173').split(',').map(o => o.trim().replace(/\/+$/, '')),
       credentials: true
     }
   });

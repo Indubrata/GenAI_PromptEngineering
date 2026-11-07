@@ -115,7 +115,7 @@ export default function UploadSection() {
     const apiUrl = import.meta.env.VITE_API_URL || '';
     const xhr = new XMLHttpRequest();
     requestRef.current = xhr;
-    xhr.timeout = 30000;
+    xhr.timeout = 120000; // allow for a cold-starting host (e.g. Render free tier)
 
     xhr.upload.addEventListener('progress', (e) => {
       if (e.lengthComputable) {
@@ -149,10 +149,11 @@ export default function UploadSection() {
       const poll = async () => {
         const controller = new AbortController();
         requestRef.current = controller;
-        const timeout = setTimeout(() => controller.abort(), 15000);
+        const timeout = setTimeout(() => controller.abort(), 45000);
         try {
           const response = await fetch(`${apiUrl}/api/upload/${result.jobId}`, { credentials: 'include', signal: controller.signal });
           const status = await response.json();
+          if (response.status === 404) throw new Error('Your session expired before the analysis finished. Please upload again.');
           if (!response.ok || status.status === 'failed') throw new Error(status.error || 'Analysis failed. Please retry.');
           if (status.status === 'completed') {
             if (!status.data) throw new Error('Analysis returned no resume data. Please retry.');

@@ -1,0 +1,36 @@
+# Render Blueprint: one Web Service serves both the API and the built React app
+# (same origin => no CORS / cross-site cookie problems), plus a Key Value (Redis) store.
+services:
+  - type: web
+    name: checkmyresume
+    runtime: node
+    plan: free
+    buildCommand: >-
+      npm --prefix client ci && npm --prefix client run build &&
+      npm --prefix server ci
+    startCommand: npm --prefix server start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PUPPETEER_CACHE_DIR
+        value: /opt/render/project/.cache/puppeteer
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: checkmyresume-redis
+          property: connectionString
+      - key: GROQ_API_KEY
+        sync: false          # paste your key in the Render dashboard
+      - key: BRIGHT_DATA_API_KEY
+        sync: false
+      - key: CLIENT_URL
+        sync: false          # e.g. https://checkmyresume.onrender.com (your service URL)
+
+  - type: keyvalue
+    name: checkmyresume-redis
+    plan: free
+    maxmemoryPolicy: noeviction   # required by BullMQ
+    ipAllowList: []               # internal connections only

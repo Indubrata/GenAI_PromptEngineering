@@ -122,7 +122,7 @@ export default function ExportPage() {
   };
 
   const handleOpenUrl = (url) => {
-    if (url) window.open(url, '_blank', 'noopener,noreferrer');
+    if (/^https?:\/\//i.test(url || '')) window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   // Targeted search fallback URLs
@@ -261,7 +261,7 @@ export default function ExportPage() {
               <p className="outreach-card__to">
                 <strong>To:</strong>{' '}
                 {recIsLive && currentEntry ? (
-                  <a href={currentEntry.linkedinUrl} target="_blank" rel="noreferrer" className="recruiter-link">
+                  <a href={/^https?:\/\//i.test(currentEntry.linkedinUrl || '') ? currentEntry.linkedinUrl : '#'} target="_blank" rel="noreferrer" className="recruiter-link">
                     {currentEntry.name} ({currentEntry.title} @ {currentEntry.company})
                   </a>
                 ) : (

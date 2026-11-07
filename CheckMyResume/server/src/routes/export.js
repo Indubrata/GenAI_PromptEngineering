@@ -243,7 +243,9 @@ router.post('/pdf',
       `;
 
       browser = await puppeteer.launch({ 
-        executablePath: process.env.BROWSER_EXECUTABLE_PATH || '/usr/bin/brave-browser',
+        // Use Puppeteer's own Chrome unless an explicit path is provided (the old hard-coded
+        // /usr/bin/brave-browser only exists on the original dev machine, never on Render).
+        ...(process.env.BROWSER_EXECUTABLE_PATH ? { executablePath: process.env.BROWSER_EXECUTABLE_PATH } : {}),
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',

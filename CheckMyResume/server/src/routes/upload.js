@@ -6,18 +6,20 @@ const router = express.Router();
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => cb(null, /\.pdf$/i.test(file.originalname) && ['application/pdf', 'application/octet-stream'].includes(file.mimetype))
+  // Browsers/OSes label PDFs inconsistently (application/pdf, application/x-pdf, octet-stream, or empty),
+  // so trust the extension here and verify the real %PDF- signature in the handler.
+  fileFilter: (req, file, cb) => cb(null, /\.pdf$/i.test(file.originalname))
 });
 router.post('/', upload.single('resume'), async (req, res, next) => {
   try {
-    if (!req.file) return res.status(400).json({ error: 'Please select a PDF resume.' });
+    if (!req.file) return res.status(400).json({ error: 'Only PDF files are accepted. Please choose a .pdf file.' });
     if (!req.file.buffer.subarray(0, 1024).includes(Buffer.from('%PDF-'))) {
       return res.status(400).json({ error: 'This file is not a valid PDF. Export your resume as PDF and try again.' });
     }
     if (redisClient.status !== 'ready') return res.status(503).json({ error: 'Resume processing is temporarily unavailable. Please try again shortly.' });
     req.session.uploads = (req.session.uploads || 0) + 1;
     await new Promise((resolve, reject) => req.session.save(err => err ? reject(err) : resolve()));
-    const job = await addResumeJob(req.sessionID, req.file.buffer, req.file.mimetype, req.body.targetRole, req.body.targetDescription);
+    const job = await addResumeJob(req.sessionID, req.file.buffer, 'application/pdf', req.body.targetRole, req.body.targetDescription);
     res.status(202).json({ jobId: job.id, sessionId: req.sessionID });
   } catch (error) { next(error); }
 });
