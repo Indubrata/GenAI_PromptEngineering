@@ -1,57 +1,14 @@
-import { useEffect, useRef } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useRef } from 'react';
 import { Icon } from '@iconify/react';
 import './StorySection.css';
 
-gsap.registerPlugin(ScrollTrigger);
+
 
 export default function StorySection() {
   const containerRef = useRef(null);
   const leftPinRef = useRef(null);
   const rightScrollRef = useRef(null);
   
-  useEffect(() => {
-    // Respect reduced motion preference
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) return;
-    
-    // GSAP ScrollTrigger for pinned section (scroll-experience skill)
-    // Left side pins, right side scrolls
-    const mm = gsap.matchMedia();
-    
-    mm.add("(min-width: 1024px)", () => {
-      ScrollTrigger.create({
-        trigger: containerRef.current,
-        start: "top top",
-        end: "bottom bottom",
-        pin: leftPinRef.current,
-        pinSpacing: false,
-      });
-      
-      // Parallax effect on the images in the right column
-      const cards = gsap.utils.toArray('.story__card');
-      cards.forEach((card, i) => {
-        gsap.fromTo(card, 
-          { y: 100, opacity: 0 },
-          { 
-            y: 0, 
-            opacity: 1,
-            scrollTrigger: {
-              trigger: card,
-              start: "top 80%",
-              end: "top 30%",
-              scrub: 1
-            }
-          }
-        );
-      });
-    });
-
-    return () => {
-      mm.revert();
-    };
-  }, []);
 
   return (
     <section id="story" className="story-section" ref={containerRef}>
@@ -84,7 +41,7 @@ export default function StorySection() {
 
         {/* Right: Scrolling Visuals */}
         <div className="story__right" ref={rightScrollRef}>
-          <div className="story__card glass">
+          <div className="story__card glass reveal">
             <div className="story__card-icon" style={{ backgroundColor: 'color-mix(in srgb, var(--error-bg) 50%, transparent)' }}>
               <Icon icon="ph:robot-bold" width="32" height="32" color="var(--error-text)" />
             </div>
@@ -92,7 +49,7 @@ export default function StorySection() {
             <p>Companies use rigid software to scan for exact keyword matches. If you say "Customer Service" but they want "Client Relations", you're filtered out.</p>
           </div>
 
-          <div className="story__card glass">
+          <div className="story__card glass reveal">
             <div className="story__card-icon" style={{ backgroundColor: 'var(--accent-gold-soft)' }}>
               <Icon icon="ph:brain-bold" width="32" height="32" color="var(--accent-gold)" />
             </div>
@@ -100,7 +57,7 @@ export default function StorySection() {
             <p>Our dual-failover LLM engine understands the context of your experience and intelligently injects the exact terminology recruiters are searching for.</p>
           </div>
 
-          <div className="story__card glass">
+          <div className="story__card glass reveal">
             <div className="story__card-icon" style={{ backgroundColor: 'color-mix(in srgb, var(--success-text) 20%, transparent)' }}>
               <Icon icon="ph:check-circle-bold" width="32" height="32" color="var(--success-text)" />
             </div>

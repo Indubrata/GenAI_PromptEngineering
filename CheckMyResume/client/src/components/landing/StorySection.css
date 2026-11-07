@@ -132,14 +132,14 @@
   .story__left {
     width: 50%;
     /* 100vh height ensures it fills the viewport while pinned */
-    height: 100vh;
+    height: auto;
     padding-right: var(--space-8);
   }
 
   .story__right {
     width: 50%;
-    padding-top: 50vh; /* Start halfway down the screen */
-    padding-bottom: 50vh; /* End halfway down the screen */
+    padding-top: 0; /* Start halfway down the screen */
+    padding-bottom: 0; /* End halfway down the screen */
     gap: var(--space-9); /* More space between cards for scroll effect */
   }
 }

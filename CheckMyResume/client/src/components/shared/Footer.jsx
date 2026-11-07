@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import './Footer.css';
 
@@ -21,15 +22,15 @@ export default function Footer() {
           <div className="footer__column">
             <h4>Product</h4>
             <ul>
-              <li><a href="#features">Features</a></li>
-              <li><a href="#story">Our Story</a></li>
-              <li><a href="#pricing">Pricing</a></li>
+              <li><Link to="/#features">Features</Link></li>
+              <li><Link to="/#story">Our Story</Link></li>
+              <li><Link to="/#upload">Analyze Resume</Link></li>
             </ul>
           </div>
           <div className="footer__column">
             <h4>Resources</h4>
             <ul>
-              <li><a href="#faq">FAQ</a></li>
+              <li><Link to="/#faq">FAQ</Link></li>
             </ul>
           </div>
         </div>
@@ -38,11 +39,7 @@ export default function Footer() {
           <p className="footer__copyright">
             &copy; {year} CheckMyResume. All rights reserved.
           </p>
-          <div className="footer__socials">
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
-              <Icon icon="ph:github-logo-bold" width="20" height="20" />
-            </a>
-          </div>
+
         </div>
       </div>
     </footer>

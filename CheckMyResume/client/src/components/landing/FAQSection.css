@@ -79,3 +79,5 @@
 .faq__answer p {
   margin: 0;
 }
+
+.faq__question { width: 100%; text-align: left; color: inherit; }

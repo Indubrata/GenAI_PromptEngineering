@@ -20,12 +20,13 @@ async function pollSnapshot(snapshotId, apiKey, maxWaitMs = 30_000) {
     await delay(3000);
     const res = await fetch(
       `${BRIGHTDATA_BASE}/datasets/v3/snapshot/${snapshotId}?format=json`,
-      { headers: { Authorization: `Bearer ${apiKey}` } }
+      { headers: { Authorization: `Bearer ${apiKey}` }, signal: AbortSignal.timeout(10000) }
     );
 
     if (!res.ok) throw new Error(`Snapshot poll failed: ${res.status}`);
     const body = await res.json();
 
+    if (Array.isArray(body)) return body;
     if (body.status === 'ready' && Array.isArray(body.data)) return body.data;
     if (body.status === 'failed') throw new Error('BrightData snapshot failed');
   }
@@ -39,6 +40,7 @@ async function triggerAndCollect(datasetId, payload, apiKey, limit) {
     `${BRIGHTDATA_BASE}/datasets/v3/trigger?dataset_id=${datasetId}&include_errors=false`,
     {
       method: 'POST',
+      signal: AbortSignal.timeout(10000),
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
@@ -84,10 +86,9 @@ export async function fetchLiveJobs(jobTitle, limit = 3) {
 
     return {
       isLive: true,
-      jobs: rows.map((job, i) => ({
+      jobs: rows.map((job) => ({
         role: job.title || job.job_title || jobTitle,
         company: job.company_name || job.company || 'Unknown Company',
-        match: matchScore(i),
         salary: job.salary || job.salary_range || 'Competitive',
         location: job.location || job.job_location || 'Remote',
         url: job.url || job.job_url || `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(jobTitle)}`,
@@ -145,10 +146,6 @@ export async function fetchRecruitersAtCompany(company, jobTitle, limit = 3) {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-function matchScore(index) {
-  return ['96%', '91%', '84%', '78%', '72%'][index] || '70%';
-}
 
 function buildTargetedJobSearchUrls(jobTitle) {
   return {

@@ -58,6 +58,8 @@ export const resumeWorker = new Worker('resumeProcessing', async (job) => {
       message: 'Extracting text from PDF...' 
     });
 
+    await job.updateProgress({ step: 'parsing' });
+
     // 1. Convert base64 back to buffer and extract text
     const buffer = Buffer.from(fileBuffer, 'base64');
     const rawText = await extractTextFromPDF(buffer);
@@ -67,6 +69,8 @@ export const resumeWorker = new Worker('resumeProcessing', async (job) => {
       step: 'analyzing', 
       message: 'AI is analyzing structure and matching keywords...' 
     });
+
+    await job.updateProgress({ step: 'analyzing' });
 
     // 2. Call AI Gateway to parse and structure the data
     const userPrompt = `
@@ -96,7 +100,7 @@ export const resumeWorker = new Worker('resumeProcessing', async (job) => {
       data: structuredResume
     });
 
-    return { success: true };
+    return { success: true, data: structuredResume };
 
   } catch (error) {
     console.error(`Error processing resume job ${job.id}:`, error);

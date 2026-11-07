@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { io } from 'socket.io-client';
 import gsap from 'gsap';
 import ScoreMeter from '../ui/ScoreMeter.jsx';
 import './ScorePage.css';
@@ -14,69 +13,25 @@ export default function ScorePage() {
   const [message, setMessage] = useState('Connecting to analysis engine...');
   const [score, setScore] = useState(0);
   const [resumeData, setResumeData] = useState(null);
-  const [error, setError] = useState(null);
+  const [error] = useState(null);
 
   useEffect(() => {
-    // If user got here without a jobId/sessionId, boot them back home
-    if (!location.state || !location.state.sessionId) {
-      navigate('/');
-      return;
-    }
-
-    const { sessionId } = location.state;
-
-    // Connect to the Socket.io server
-    const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:3001', {
-      withCredentials: true
-    });
-
-    socket.on('connect', () => {
-      setStatus('waiting');
-      setMessage('Waiting in queue...');
-      
-      // Join the specific room for this session's job
-      socket.emit('join-session', sessionId);
-    });
-
-    // Listen for progress updates from the backend BullMQ worker
-    socket.on('analysis-progress', (data) => {
-      setStatus('analyzing');
-      setMessage(data.message);
-    });
-
-    // Listen for completion
-    socket.on('analysis-complete', (data) => {
-      if (data.success && data.data) {
-        setStatus('complete');
-        setMessage('Analysis complete!');
-        setResumeData(data.data);
-        
-        // Calculate a dummy score for now (or pull from AI data if present)
-        // In a real app, AI Gateway would spit this out.
-        const calculatedScore = data.data.atsScore || Math.floor(Math.random() * (95 - 65 + 1) + 65);
-        setScore(calculatedScore);
-      }
-    });
-
-    // Listen for errors
-    socket.on('analysis-error', (data) => {
-      setStatus('error');
-      setError(data.error);
-      setMessage('Analysis failed.');
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [location, navigate]);
+    const data = location.state?.data;
+    if (!data) { navigate('/#upload', { replace: true }); return; }
+    setResumeData(data);
+    setScore(Number.isFinite(data.atsScore) ? Math.max(0, Math.min(100, data.atsScore)) : 0);
+    setStatus('complete');
+    setMessage('Analysis complete!');
+  }, [location.state, navigate]);
 
   // Entrance animation for content once complete
   useEffect(() => {
     if (status === 'complete' && containerRef.current) {
-      gsap.fromTo('.score-page__details', 
+      const animation = gsap.fromTo(containerRef.current.querySelector('.score-page__details'), 
         { y: 50, opacity: 0 },
         { y: 0, opacity: 1, duration: 1, delay: 0.5, stagger: 0.2, ease: 'power3.out' }
       );
+      return () => animation.kill();
     }
   }, [status]);
 

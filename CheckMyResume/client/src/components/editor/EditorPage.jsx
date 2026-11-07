@@ -40,16 +40,19 @@ export default function EditorPage() {
   const location = useLocation();
 
   // Starting score: 0 for scratch, or the analyzed score if uploaded
-  const baseScore = location.state?.score !== undefined ? location.state.score : 0;
-  const [addedBonus, setAddedBonus] = useState(0);
+  const baseScore = location.state?.score !== undefined ? location.state.score : (location.state?.resumeData?.atsScore ?? 0);
   const [usedSuggestions, setUsedSuggestions] = useState({});
   const [validationError, setValidationError] = useState('');
+  const [newSection, setNewSection] = useState('');
+  const [suggestionInputs, setSuggestionInputs] = useState({});
 
-  const currentScore = Math.min(100, baseScore + addedBonus);
+  const currentScore = Math.min(100, baseScore);
 
   // Initialize resumeData safely, defaulting to empty arrays/objects
   const initialData = location.state?.resumeData || {};
   const [resumeData, setResumeData] = useState({
+    ...initialData,
+    ...Object.fromEntries((initialData.customSections || []).map(section => [section.title.toLowerCase(), section.content])),
     summary: initialData.summary || '',
     experience: initialData.experience || [],
     education: initialData.education || [],
@@ -58,7 +61,7 @@ export default function EditorPage() {
     projects: initialData.projects || []
   });
 
-  const [sections, setSections] = useState(DEFAULT_SECTIONS);
+  const [sections, setSections] = useState(() => [...DEFAULT_SECTIONS, ...(initialData.customSections || []).map(section => section.title).filter(title => !DEFAULT_SECTIONS.includes(title))]);
   const [activeIndex, setActiveIndex] = useState(0); // Default to Contact Info (index 0)
   const activeSection = sections[activeIndex]?.toLowerCase() || '';
 
@@ -82,12 +85,15 @@ export default function EditorPage() {
   };
 
   const handleAddSuggestion = (suggestion, sKey) => {
-    if (usedSuggestions[sKey]) return; // Avoid adding duplicate points
+    if (usedSuggestions[sKey]) return;
+    const detail = suggestionInputs[sKey];
+    if (!detail?.trim()) return;
+    suggestion = { ...suggestion, value: detail.trim(), append: detail.trim() };
 
     if (activeSection === 'contact info') {
       handleContactUpdate(suggestion.field, suggestion.value);
     } else if (activeSection === 'summary') {
-      handleUpdate('summary', resumeData.summary + suggestion.append);
+      handleUpdate('summary', [resumeData.summary, suggestion.append].filter(Boolean).join(' '));
     } else if (activeSection === 'skills') {
       const currentSkills = Array.isArray(resumeData.skills) ? resumeData.skills : [];
       handleUpdate('skills', [...currentSkills, suggestion.append]);
@@ -121,7 +127,6 @@ export default function EditorPage() {
     }
 
     // Add points to real-time ATS score
-    setAddedBonus(prev => prev + (suggestion.points || 0));
     setUsedSuggestions(prev => ({ ...prev, [sKey]: true }));
   };
 
@@ -138,7 +143,8 @@ export default function EditorPage() {
     }
 
     setValidationError('');
-    navigate('/export', { state: { resumeData } });
+    const customSections = sections.filter(name => !DEFAULT_SECTIONS.includes(name)).map(title => ({ title, content: resumeData[title.toLowerCase()] || '' }));
+    navigate('/export', { state: { resumeData: { ...resumeData, customSections } } });
   };
 
   return (
@@ -150,14 +156,15 @@ export default function EditorPage() {
           activeIndex={activeIndex}
           onItemClick={(idx) => setActiveIndex(idx)}
         />
-        <button 
+        <input className="editor-input" aria-label="New section name" placeholder="New section name" value={newSection} onChange={e => setNewSection(e.target.value)} maxLength={60} />
+        <button disabled={!newSection.trim() || sections.some(section => section.toLowerCase() === newSection.trim().toLowerCase())}
           className="sidebar__add-btn" 
           style={{ marginTop: '20px', background: 'transparent', border: '1px dashed #6c6c6c', color: '#c4c4c4', padding: '10px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', width: '100%', justifyContent: 'center' }} 
           onClick={() => {
-            const newSection = prompt('Enter new section name:');
-            if (newSection && newSection.trim() !== '') {
-              setSections(prev => [...prev, newSection]);
+            if (newSection?.trim() && !sections.some(section => section.toLowerCase() === newSection.trim().toLowerCase())) {
+              setSections(prev => [...prev, newSection.trim()]);
               setActiveIndex(sections.length);
+              setNewSection('');
             }
           }}
         >
@@ -241,6 +248,7 @@ export default function EditorPage() {
             <div className="editor-list">
               {resumeData.experience.map((exp, idx) => (
                 <div key={idx} className="editor-card">
+                  <button className="btn-secondary" onClick={() => handleUpdate('experience', resumeData.experience.filter((_, i) => i !== idx))}>Remove experience</button>
                   <input 
                     className="editor-input"
                     value={exp.role || ''} 
@@ -286,6 +294,7 @@ export default function EditorPage() {
             <div className="editor-list">
               {resumeData.education.map((edu, idx) => (
                 <div key={idx} className="editor-card">
+                  <button className="btn-secondary" onClick={() => handleUpdate('education', resumeData.education.filter((_, i) => i !== idx))}>Remove education</button>
                   <input 
                     className="editor-input"
                     value={edu.degree || ''} 
@@ -308,10 +317,10 @@ export default function EditorPage() {
                   />
                   <input 
                     className="editor-input"
-                    value={edu.year || ''} 
+                    value={edu.graduationDate || edu.year || ''} 
                     onChange={(e) => {
                       const newEdu = [...resumeData.education];
-                      newEdu[idx].year = e.target.value;
+                      newEdu[idx].graduationDate = e.target.value;
                       handleUpdate('education', newEdu);
                     }}
                     placeholder="Year (e.g. 2020 - 2024)"
@@ -350,6 +359,7 @@ export default function EditorPage() {
             <div className="editor-list">
               {resumeData.projects.map((proj, idx) => (
                 <div key={idx} className="editor-card">
+                  <button className="btn-secondary" onClick={() => handleUpdate('projects', resumeData.projects.filter((_, i) => i !== idx))}>Remove project</button>
                   <input 
                     className="editor-input"
                     value={proj.name || ''} 
@@ -397,15 +407,15 @@ export default function EditorPage() {
       {/* Column 3: Tools Sidebar (AI Assistant / Score Meter) */}
       <aside className="editor-page__tools">
         <div className="editor-tool-card">
-          <h3>Real-time ATS Score</h3>
+          <h3>Original Analysis Score</h3>
           <div className="mini-score">
              <span className="mini-score__val">{currentScore}</span>/100
           </div>
-          <p>Optimize your {activeSection} to gain more points.</p>
+          <p>This score is from your uploaded resume. Edits have not been rescored.</p>
         </div>
         
         <div className="editor-tool-card">
-          <h3>AI Suggestions for {sections[activeIndex]}</h3>
+          <h3>Writing Tips for {sections[activeIndex]}</h3>
           <ul className="ai-suggestions">
             {AI_SUGGESTIONS[activeSection]?.map((suggestion, idx) => {
               const sKey = `${activeSection}-${idx}`;
@@ -414,14 +424,15 @@ export default function EditorPage() {
                 <li key={idx} className="ai-suggestion-item">
                   <div className="ai-suggestion-text">
                     <span>{suggestion.text}</span>
-                    <span className="ai-suggestion-points">+{suggestion.points} pts</span>
+                    
                   </div>
+                  {!isUsed && <input className="editor-input" aria-label={`Your detail for ${suggestion.text}`} placeholder="Enter your own accurate detail" value={suggestionInputs[sKey] || ''} onChange={e => setSuggestionInputs(prev => ({ ...prev, [sKey]: e.target.value }))} />}
                   <button 
                     className={`btn-add-suggestion ${isUsed ? 'btn-add-suggestion--used' : ''}`}
                     onClick={() => handleAddSuggestion(suggestion, sKey)}
-                    disabled={isUsed}
+                    disabled={isUsed || !suggestionInputs[sKey]?.trim()}
                   >
-                    <Icon icon={isUsed ? "ph:check-bold" : "ph:plus-bold"} /> {isUsed ? 'Added' : 'Add'}
+                    <Icon icon={isUsed ? "ph:check-bold" : "ph:plus-bold"} /> {isUsed ? 'Added' : 'Add your detail'}
                   </button>
                 </li>
               );

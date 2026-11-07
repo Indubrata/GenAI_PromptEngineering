@@ -48,14 +48,14 @@ export default function Navbar() {
 
         <div className="navbar__actions">
           <ThemeToggle />
-          <button
+          {isLanding && <button
             className="navbar__mobile-toggle"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle menu"
             aria-expanded={mobileOpen}
           >
             <Icon icon={mobileOpen ? 'ph:x-bold' : 'ph:list-bold'} width="24" height="24" />
-          </button>
+          </button>}
         </div>
       </nav>
     </header>

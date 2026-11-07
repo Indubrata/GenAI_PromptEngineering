@@ -5,6 +5,11 @@ import { body, validationResult } from 'express-validator';
 
 const router = express.Router();
 
+const escapeHTML = value => typeof value === 'string'
+  ? value.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]))
+  : Array.isArray(value) ? value.map(escapeHTML)
+  : value && typeof value === 'object' ? Object.fromEntries(Object.entries(value).map(([key, item]) => [key, escapeHTML(item)])) : value;
+
 // ── HTML formatting helpers for PDF export ────────────────────────────────────
 
 function formatExperienceHTML(exp) {
@@ -144,8 +149,9 @@ router.post('/pdf',
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { resumeData } = req.body;
+    const resumeData = escapeHTML(req.body.resumeData);
 
+    let browser;
     try {
       const contact = resumeData.contact || resumeData['contact info'] || {};
       const name = contact.name || resumeData.name || 'Resume';
@@ -210,6 +216,9 @@ router.post('/pdf',
         `);
       }
 
+      for (const section of resumeData.customSections || []) {
+        if (section.content?.trim()) dynamicSections.push(`<div class="section"><h2>${section.title}</h2><p style="white-space:pre-wrap">${section.content}</p></div>`);
+      }
       const htmlContent = `
         <!DOCTYPE html>
         <html>
@@ -233,7 +242,7 @@ router.post('/pdf',
         </html>
       `;
 
-      const browser = await puppeteer.launch({ 
+      browser = await puppeteer.launch({ 
         executablePath: process.env.BROWSER_EXECUTABLE_PATH || '/usr/bin/brave-browser',
         args: [
           '--no-sandbox',
@@ -244,9 +253,13 @@ router.post('/pdf',
         ]
       });
       const page = await browser.newPage();
+      await page.setJavaScriptEnabled(false);
+      await page.setRequestInterception(true);
+      page.on('request', request => request.abort());
       await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
       const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '20px', bottom: '20px', left: '20px', right: '20px' } });
       await browser.close();
+      browser = null;
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', 'attachment; filename="Optimized_Resume.pdf"');
@@ -254,7 +267,7 @@ router.post('/pdf',
     } catch (error) {
       console.error('PDF Generation Error:', error);
       res.status(500).json({ error: 'Failed to generate PDF' });
-    }
+    } finally { await browser?.close(); }
 });
 
 
@@ -517,6 +530,12 @@ router.post('/docx',
         }
       }
 
+      for (const section of resumeData.customSections || []) {
+        if (section.content?.trim()) {
+          addSectionHeading(section.title);
+          docChildren.push(new Paragraph({ text: section.content, spacing: { after: 200 } }));
+        }
+      }
       const doc = new Document({
         sections: [{
           properties: {},

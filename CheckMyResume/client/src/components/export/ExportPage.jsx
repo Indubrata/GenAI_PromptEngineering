@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import { useResume } from '../../context/ResumeContext';
 import SpecularButton from '../ui/SpecularButton';
 import './ExportPage.css';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API = import.meta.env.VITE_API_URL || '';
 
 export default function ExportPage() {
   const { jobRole } = useResume();
@@ -49,8 +49,8 @@ export default function ExportPage() {
         setLoadingJobs(false);
       }
     };
-    fetchJobs();
-  }, [userTitle]);
+    if (resumeData) fetchJobs();
+  }, [userTitle, resumeData]);
 
   /* ── Fetch recruiters ── */
   useEffect(() => {
@@ -75,8 +75,8 @@ export default function ExportPage() {
       }
     };
 
-    fetchRecruiters();
-  }, [jobMatches, userTitle]);
+    if (resumeData) fetchRecruiters();
+  }, [jobMatches, userTitle, resumeData]);
 
   /* ── Download handlers ── */
   const handleDownload = async (format) => {
@@ -97,7 +97,7 @@ export default function ExportPage() {
       a.href     = url;
       a.download = `Optimized_Resume.${format}`;
       a.click();
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (err) {
       console.error(err);
       alert(err.message || `Failed to generate ${format.toUpperCase()}`);
@@ -113,14 +113,16 @@ export default function ExportPage() {
 
   const messageText = `Hi ${targetRecruiterName},\n\nI came across open ${userTitle} positions at ${targetCompany} and was genuinely excited — your team's work aligns closely with my technical background. I've spent the past several years building production-grade systems and would love to explore how I can contribute.\n\nI've attached my ATS-optimized resume for your review. Would you be open to a brief 15-minute chat this week or next?\n\nLooking forward to connecting!\n\nBest regards`;
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(messageText);
-    setCopyDone(true);
-    setTimeout(() => setCopyDone(false), 2000);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(messageText);
+      setCopyDone(true);
+      setTimeout(() => setCopyDone(false), 2000);
+    } catch { alert('Copy is unavailable. Please select and copy the message text.'); }
   };
 
   const handleOpenUrl = (url) => {
-    if (url) window.open(url, '_blank');
+    if (url) window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   // Targeted search fallback URLs
@@ -131,12 +133,14 @@ export default function ExportPage() {
   const defaultRecSearchLinkedIn = recSearchUrls.linkedin || `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(`recruiter OR "hiring manager" OR "talent acquisition" "${userTitle}"`)}`;
   const defaultRecSearchGoogle = recSearchUrls.google || `https://www.google.com/search?q=${encodeURIComponent(`site:linkedin.com/in/ recruiter OR "talent acquisition" "${userTitle}"`)}`;
 
+  if (!resumeData) return <Navigate to="/editor" replace />;
+
   return (
     <div className="export-page">
       <header className="export-page__header">
         <h1 className="export-page__title">Your Resume is Ready</h1>
         <p className="export-page__subtitle">
-          Based on our AI analysis, your resume is now highly optimized for ATS tracking systems.
+          Download your edited resume in a clean, readable format. Review the details before applying.
         </p>
       </header>
 
@@ -184,7 +188,7 @@ export default function ExportPage() {
                 <div key={idx} className="job-card">
                   <div className="job-card__header">
                     <h3>{job.role}</h3>
-                    <span className="job-card__match">{job.match} Match</span>
+                    
                   </div>
                   <p className="job-card__company">{job.company}</p>
                   <div className="job-card__details">

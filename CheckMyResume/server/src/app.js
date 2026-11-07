@@ -57,8 +57,8 @@ app.get('/api/health', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(err.status || 500).json({
-    error: err.message || 'Internal Server Error'
+  res.status(err.code === 'LIMIT_FILE_SIZE' ? 413 : err.status || 500).json({
+    error: err.code === 'LIMIT_FILE_SIZE' ? 'Your PDF must be under 5 MB.' : err.message || 'Internal Server Error'
   });
 });
 

@@ -28,7 +28,9 @@ export async function addResumeJob(sessionId, fileBuffer, mimeType, targetRole, 
     targetRole,
     targetDescription
   }, {
-    attempts: 3,
+    attempts: 1,
+    removeOnComplete: { age: 3600, count: 100 },
+    removeOnFail: { age: 3600, count: 100 },
     backoff: { type: 'exponential', delay: 1000 }
   });
 }

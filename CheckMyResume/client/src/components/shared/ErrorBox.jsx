@@ -23,7 +23,7 @@ export default function ErrorBox() {
   if (!error) return null;
 
   return (
-    <div className="error-box reveal slide-up visible" role="alert">
+    <div className="error-box" role="alert">
       <Icon icon="ph:warning-circle-bold" width="24" height="24" className="error-box__icon" />
       <div className="error-box__content">
         <strong>Error</strong>

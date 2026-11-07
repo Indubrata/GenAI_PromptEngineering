@@ -1,17 +1,28 @@
 import Groq from 'groq-sdk';
-import dotenv from 'dotenv';
 
-dotenv.config();
+// GROQ_API_KEY is injected at startup via `--env-file=../.env` in package.json dev script.
+// Do NOT call dotenv.config() here — it would look for .env in server/ (not found)
+// and silently leave the key undefined, breaking auth.
+if (!process.env.GROQ_API_KEY) {
+  throw new Error(
+    '[aiGateway] GROQ_API_KEY is not set.\n' +
+    '  → Make sure your root .env file has GROQ_API_KEY=gsk_... and restart the server.\n' +
+    '  → Get a fresh key at https://console.groq.com/keys'
+  );
+}
 
 const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY
+  apiKey: process.env.GROQ_API_KEY,
+  timeout: 60000,
+  maxRetries: 0
 });
 
 // Dual failover strategy: fast model for simple tasks, robust model for complex formatting
+// Updated August 2026 — all prior llama/mixtral models have been decommissioned by Groq.
 const MODELS = {
-  FAST: 'llama-3.1-8b-instant', // Fast inference for basic extraction
-  ROBUST: 'llama-3.3-70b-versatile', // High reasoning for rewriting and scoring
-  BACKUP: 'mixtral-8x7b-32768' // Failover
+  FAST: 'openai/gpt-oss-20b',        // Fast inference for basic extraction
+  ROBUST: 'openai/gpt-oss-120b',     // High reasoning for rewriting and scoring
+  BACKUP: 'qwen/qwen3.6-27b'         // Failover
 };
 
 /**

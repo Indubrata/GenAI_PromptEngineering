@@ -1,5 +1,4 @@
-import { useEffect, useRef } from 'react';
-import gsap from 'gsap';
+import { useRef } from 'react';
 import { Icon } from '@iconify/react';
 import './ReviewsSection.css';
 
@@ -13,26 +12,6 @@ const REVIEWS = [
 
 export default function ReviewsSection() {
   const marqueeRef = useRef(null);
-
-  useEffect(() => {
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) return;
-
-    // Continuous scroll marquee animation
-    const marquee = marqueeRef.current;
-    if (marquee) {
-      // Clone the content for seamless loop
-      const content = marquee.innerHTML;
-      marquee.innerHTML = content + content;
-      
-      gsap.to(marquee, {
-        xPercent: -50,
-        ease: 'none',
-        duration: 20,
-        repeat: -1
-      });
-    }
-  }, []);
 
   return (
     <section id="reviews" className="reviews-section">

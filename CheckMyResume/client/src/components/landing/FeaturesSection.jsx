@@ -1,43 +1,11 @@
-import { useEffect, useRef } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useRef } from 'react';
 import { Icon } from '@iconify/react';
 import './FeaturesSection.css';
 
-gsap.registerPlugin(ScrollTrigger);
+
 
 export default function FeaturesSection() {
   const gridRef = useRef(null);
-
-  useEffect(() => {
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) return;
-
-    // Card stacking animation on scroll (from gpt-taste skill)
-    const cards = gsap.utils.toArray('.bento-card');
-    
-    cards.forEach((card, i) => {
-      gsap.fromTo(card,
-        { 
-          opacity: 0,
-          y: 60,
-          scale: 0.95 
-        },
-        {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          duration: 0.8,
-          ease: "back.out(1.2)",
-          scrollTrigger: {
-            trigger: card,
-            start: "top 85%",
-            toggleActions: "play none none reverse"
-          }
-        }
-      );
-    });
-  }, []);
 
   return (
     <section id="features" className="features-section container">
@@ -50,26 +18,19 @@ export default function FeaturesSection() {
       <div className="bento-grid" ref={gridRef}>
         
         {/* Large Feature: Real-time Editor */}
-        <div className="bento-card bento-card--large hover-glow">
+        <div className="bento-card bento-card--large hover-glow reveal">
           <div className="bento-card__content">
             <div className="bento-card__icon">
               <Icon icon="ph:magic-wand-bold" width="28" height="28" />
             </div>
-            <h3>Real-Time AI Editor</h3>
-            <p>Watch the AI rewrite your bullets for maximum impact as you type. No more guessing what recruiters want to read.</p>
+            <h3>Guided Resume Editor</h3>
+            <p>Edit your experience, education, and skills with practical writing tips. Keep every detail accurate and ready to share.</p>
           </div>
-          <div className="bento-card__visual bento-card__visual--editor">
-            {/* Decorative visual representation */}
-            <div className="fake-editor">
-              <div className="fake-line"><span className="fake-text w-60"></span><span className="fake-highlight">Analyzed</span></div>
-              <div className="fake-line"><span className="fake-text w-80"></span></div>
-              <div className="fake-line"><span className="fake-text w-40"></span></div>
-            </div>
-          </div>
+
         </div>
 
         {/* Medium Feature: Keyword Matching */}
-        <div className="bento-card bento-card--medium hover-glow">
+        <div className="bento-card bento-card--medium hover-glow reveal">
           <div className="bento-card__content">
             <div className="bento-card__icon">
               <Icon icon="ph:crosshair-bold" width="28" height="28" />
@@ -80,7 +41,7 @@ export default function FeaturesSection() {
         </div>
 
         {/* Medium Feature: Formatting */}
-        <div className="bento-card bento-card--medium hover-glow">
+        <div className="bento-card bento-card--medium hover-glow reveal">
           <div className="bento-card__content">
             <div className="bento-card__icon">
               <Icon icon="ph:layout-bold" width="28" height="28" />
@@ -91,7 +52,7 @@ export default function FeaturesSection() {
         </div>
 
         {/* Small Feature: Live Scraping */}
-        <div className="bento-card bento-card--small hover-glow">
+        <div className="bento-card bento-card--small hover-glow reveal">
           <div className="bento-card__content">
             <div className="bento-card__icon">
               <Icon icon="ph:magnifying-glass-bold" width="28" height="28" />
@@ -102,7 +63,7 @@ export default function FeaturesSection() {
         </div>
 
         {/* Small Feature: Outreach */}
-        <div className="bento-card bento-card--small hover-glow">
+        <div className="bento-card bento-card--small hover-glow reveal">
           <div className="bento-card__content">
             <div className="bento-card__icon">
               <Icon icon="ph:envelope-simple-bold" width="28" height="28" />

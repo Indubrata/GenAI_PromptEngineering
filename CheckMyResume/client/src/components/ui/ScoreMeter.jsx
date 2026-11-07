@@ -18,7 +18,7 @@ export default function ScoreMeter({ score = 0, isAnimating = false }) {
     
     if (isAnimating) {
       // Loop a pulsing waiting animation if still analyzing
-      gsap.to(circleRef.current, {
+      const spinner = gsap.to(circleRef.current, {
         strokeDashoffset: circumference * 0.2, // Show a 80% ring spinning
         rotation: 360,
         transformOrigin: "50% 50%",
@@ -26,7 +26,7 @@ export default function ScoreMeter({ score = 0, isAnimating = false }) {
         ease: "linear",
         duration: 2
       });
-      return;
+      return () => spinner.kill();
     }
 
     // Actual score reveal
@@ -35,7 +35,7 @@ export default function ScoreMeter({ score = 0, isAnimating = false }) {
     const targetOffset = circumference - (score / 100) * circumference;
     
     // Animate the stroke dash array
-    gsap.fromTo(circleRef.current, 
+    const ring = gsap.fromTo(circleRef.current, 
       { strokeDashoffset: circumference, rotation: -90, transformOrigin: "50% 50%" },
       { 
         strokeDashoffset: targetOffset,
@@ -46,7 +46,7 @@ export default function ScoreMeter({ score = 0, isAnimating = false }) {
     );
 
     // Animate the number counting up
-    gsap.to({ val: 0 }, {
+    const counter = gsap.to({ val: 0 }, {
       val: score,
       duration: prefersReducedMotion ? 0 : 2,
       ease: "power3.out",
@@ -55,6 +55,7 @@ export default function ScoreMeter({ score = 0, isAnimating = false }) {
       }
     });
 
+    return () => { ring.kill(); counter.kill(); };
   }, [score, isAnimating, circumference]);
 
   // Determine color based on score

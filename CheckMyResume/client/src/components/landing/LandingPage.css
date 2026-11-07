@@ -10,7 +10,7 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
+  overflow: clip;
   /* Base page colour (gradient sits on top of this) */
   background: var(--bg-primary);
 }
@@ -49,9 +49,9 @@
     /* Lower page – violet tail */
     radial-gradient(ellipse 50% 12% at 78% 92%, oklch(0.58 0.20 290 / 0.28) 0%, transparent 50%);
 
-  filter: blur(90px);
-  animation: landing-aurora-drift 22s ease-in-out infinite alternate;
-  will-change: transform;
+  
+  
+  
 }
 
 /* Dark mode aurora – slightly more vivid since dark bg needs more contrast */
@@ -63,7 +63,7 @@
     radial-gradient(ellipse 48% 12% at 72% 55%, oklch(0.68 0.14 80  / 0.25) 0%, transparent 50%),
     radial-gradient(ellipse 55% 14% at 20% 78%, oklch(0.62 0.16 50  / 0.32) 0%, transparent 55%),
     radial-gradient(ellipse 50% 12% at 78% 92%, oklch(0.55 0.18 290 / 0.24) 0%, transparent 50%);
-  filter: blur(100px);
+  
 }
 
 @keyframes landing-aurora-drift {

@@ -10,17 +10,10 @@
    ============================================ */
 
 /* --- Deltha Display Font (Landing Page Only) --- */
-@font-face {
-  font-family: 'Deltha';
-  src: url('/fonts/deltha/Deltha.woff2') format('woff2'),
-       url('/fonts/deltha/Deltha.woff') format('woff'),
-       url('/fonts/deltha/Deltha.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
 :root {
+  --border-color: var(--border-default);
+  --bg-body: var(--bg-primary);
+  --transition-fast: var(--duration-fast);
   /* ========================
      SPACING (8px Grid)
      ======================== */
@@ -41,7 +34,7 @@
   /* ========================
      TYPOGRAPHY
      ======================== */
-  --font-display: 'Deltha', 'Outfit', system-ui, sans-serif;
+  --font-display: 'Outfit', 'Outfit', system-ui, sans-serif;
   --font-heading: 'Outfit', system-ui, sans-serif;
   --font-body: 'Outfit', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;

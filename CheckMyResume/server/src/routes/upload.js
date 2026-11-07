@@ -1,53 +1,33 @@
 import express from 'express';
 import multer from 'multer';
-import { addResumeJob } from '../services/queue.js';
-
+import { addResumeJob, resumeQueue } from '../services/queue.js';
+import { redisClient } from '../config/redis.js';
 const router = express.Router();
-
-// Configure multer to store uploaded files in memory
-const storage = multer.memoryStorage();
 const upload = multer({
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit matching frontend
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'application/pdf') {
-      cb(null, true);
-    } else {
-      cb(new Error('Only PDF files are allowed!'), false);
-    }
-  }
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => cb(null, /\.pdf$/i.test(file.originalname) && ['application/pdf', 'application/octet-stream'].includes(file.mimetype))
 });
-
-// POST /api/upload
 router.post('/', upload.single('resume'), async (req, res, next) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No resume file uploaded.' });
+    if (!req.file) return res.status(400).json({ error: 'Please select a PDF resume.' });
+    if (!req.file.buffer.subarray(0, 1024).includes(Buffer.from('%PDF-'))) {
+      return res.status(400).json({ error: 'This file is not a valid PDF. Export your resume as PDF and try again.' });
     }
-
-    const { targetRole, targetDescription } = req.body;
-    
-    // Fallback session ID if anonymous session middleware isn't fully bound yet
-    const sessionId = req.sessionID || `temp_${Date.now()}`;
-
-    // Add processing job to BullMQ
-    const job = await addResumeJob(
-      sessionId,
-      req.file.buffer,
-      req.file.mimetype,
-      targetRole,
-      targetDescription
-    );
-
-    res.status(202).json({
-      message: 'Resume received and added to processing queue.',
-      jobId: job.id,
-      sessionId: sessionId // Send back to client so they can listen to correct socket room
-    });
-
-  } catch (error) {
-    next(error);
-  }
+    if (redisClient.status !== 'ready') return res.status(503).json({ error: 'Resume processing is temporarily unavailable. Please try again shortly.' });
+    req.session.uploads = (req.session.uploads || 0) + 1;
+    await new Promise((resolve, reject) => req.session.save(err => err ? reject(err) : resolve()));
+    const job = await addResumeJob(req.sessionID, req.file.buffer, req.file.mimetype, req.body.targetRole, req.body.targetDescription);
+    res.status(202).json({ jobId: job.id, sessionId: req.sessionID });
+  } catch (error) { next(error); }
 });
-
+// Durable status prevents losing a result if analysis finishes before the client connects.
+router.get('/:jobId', async (req, res, next) => {
+  try {
+    const job = await resumeQueue.getJob(req.params.jobId);
+    if (!job || job.data.sessionId !== req.sessionID) return res.status(404).json({ error: 'Analysis not found. Please upload your resume again.' });
+    const status = await job.getState();
+    res.json({ status, step: job.progress?.step || 'parsing', data: status === 'completed' ? job.returnvalue.data : undefined, error: status === 'failed' ? job.failedReason : undefined });
+  } catch (error) { next(error); }
+});
 export default router;

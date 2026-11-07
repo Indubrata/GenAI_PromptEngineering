@@ -224,7 +224,8 @@
     grid-template-columns: 200px 1fr;
   }
   .editor-page__tools {
-    display: none; /* Hide AI sidebar on smaller screens */
+    position: static;
+    grid-column: 1 / -1;
   }
 }
 
@@ -240,3 +241,6 @@
     padding-bottom: var(--space-2);
   }
 }
+
+.editor-page > * { min-width: 0; }
+@media (max-width: 768px) { .editor-page__canvas { padding: 20px; } .editor-page__nav { display: block; } }

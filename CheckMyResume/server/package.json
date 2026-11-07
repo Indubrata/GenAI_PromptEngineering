@@ -12,7 +12,9 @@
     "db:migrate": "npx prisma migrate dev",
     "db:studio": "npx prisma studio",
     "worker:scraping": "node --env-file=../.env src/workers/scrapingWorker.js",
-    "worker:pdf": "node --env-file=../.env src/workers/pdfWorker.js"
+    "worker:pdf": "node --env-file=../.env src/workers/pdfWorker.js",
+    "test": "node --test test/*.test.js",
+    "test:integration": "node test/integration.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.9.0",

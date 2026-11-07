@@ -148,3 +148,5 @@
     background: var(--accent-gold-soft);
   }
 }
+
+@media (max-width: 480px) { .navbar__inner { padding-inline: 12px; } .navbar__logo-text { font-size: 14px; } .navbar__logo { gap: 6px; } .navbar__actions { gap: 6px; } }

@@ -68,7 +68,7 @@
 
 .upload__dropzone:hover {
   border-color: var(--border-default);
-  transform: translateY(-4px);
+
   box-shadow: var(--shadow-md);
 }
 
@@ -197,6 +197,187 @@
   border-radius: var(--radius-pill);
 }
 
+/* ─── Inline dropzone validation error ──────────────────────────────── */
+.upload__inline-error {
+  position: absolute;
+  bottom: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--error-text);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  background: var(--error-bg);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+}
+
+/* ─── Minimalist Red Error Box (above grid) ────────────────────────── */
+.upload__error-box {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 1000px;
+  margin: 0 auto;
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  border-radius: var(--radius-md);
+  color: var(--error-text);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  font-family: var(--font-body);
+  animation: error-slide-in var(--duration-normal) var(--ease-out-quart) both;
+}
+
+.upload__error-box span {
+  flex: 1;
+}
+
+.upload__error-dismiss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--error-text);
+  opacity: 0.7;
+  transition: opacity var(--duration-fast);
+  flex-shrink: 0;
+}
+
+.upload__error-dismiss:hover {
+  opacity: 1;
+}
+
+@keyframes error-slide-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .upload__error-box {
+    animation: none;
+  }
+}
+
+/* ─── Progress overlay inside dropzone ────────────────────────────── */
+.upload__dropzone--uploading {
+  cursor: default;
+  pointer-events: none;
+  border-style: solid;
+  border-color: var(--accent-gold);
+}
+
+.upload__progress-view {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-5);
+  width: 100%;
+  padding: 0 var(--space-4);
+  z-index: 2;
+}
+
+/* Step list */
+.upload__steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.upload__step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  opacity: 0.35;
+  transition: opacity var(--duration-normal) var(--ease-out-quart);
+}
+
+.upload__step--active {
+  opacity: 1;
+}
+
+.upload__step--done {
+  opacity: 0.65;
+}
+
+.upload__step-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--bg-muted);
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition:
+    background var(--duration-normal) var(--ease-out-quart),
+    color      var(--duration-normal) var(--ease-out-quart);
+}
+
+.upload__step--active .upload__step-icon {
+  background: var(--accent-gold-soft);
+  color: var(--accent-gold);
+  /* Subtle pulse so the user knows it's live */
+  animation: step-pulse 1.6s ease-in-out infinite;
+}
+
+.upload__step--done .upload__step-icon {
+  background: oklch(0.72 0.12 150 / 0.15);
+  color: var(--success-text);
+  animation: none;
+}
+
+@keyframes step-pulse {
+  0%, 100% { box-shadow: 0 0 0 0   var(--accent-gold-soft); }
+  50%       { box-shadow: 0 0 0 6px transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .upload__step--active .upload__step-icon {
+    animation: none;
+  }
+}
+
+.upload__step-label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: color var(--duration-normal);
+}
+
+.upload__step--active .upload__step-label {
+  color: var(--text-primary);
+}
+
+/* Progress bar */
+.upload__bar-track {
+  height: 4px;
+  width: 100%;
+  background: var(--bg-muted);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.upload__bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-copper), var(--accent-gold));
+  border-radius: var(--radius-pill);
+  transition: width 0.5s var(--ease-out-expo);
+}
+
+.upload__bar-label {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-align: center;
+  margin: 0;
+}
+
 /* --- Context Form --- */
 .upload__context {
   display: flex;
@@ -270,3 +451,6 @@
 .w-full {
   width: 100%;
 }
+
+.upload__grid > * { min-width: 0; }
+.upload__file-info h4 { overflow-wrap: anywhere; }

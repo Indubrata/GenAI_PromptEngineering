@@ -15,7 +15,7 @@ export default function useScrollReveal() {
     const observerOptions = {
       root: null,
       rootMargin: '0px',
-      threshold: 0.15 // Trigger when 15% of the element is visible
+      threshold: 0.01 // Trigger when 15% of the element is visible
     };
 
     const observer = new IntersectionObserver(observerCallback, observerOptions);

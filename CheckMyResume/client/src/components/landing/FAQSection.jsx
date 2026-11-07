@@ -1,6 +1,5 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Icon } from '@iconify/react';
-import gsap from 'gsap';
 import './FAQSection.css';
 
 const FAQS = [
@@ -10,7 +9,7 @@ const FAQS = [
   },
   {
     question: "Will my data be used to train AI?",
-    answer: "No. We prioritize your privacy. Your resume data is processed in memory during the session and is never stored permanently or used to train any foundational models."
+    answer: "Your resume is sent to our AI provider for analysis. Processing jobs and results are kept temporarily in the queue and scheduled for cleanup after one hour. Avoid including sensitive information that is not needed for your application."
   },
   {
     question: "Is the generated resume ATS-friendly?",
@@ -24,26 +23,7 @@ const FAQS = [
 
 export default function FAQSection() {
   const [openIndex, setOpenIndex] = useState(0); // First one open by default
-  const contentRefs = useRef([]);
-
-  const toggleAccordion = (index) => {
-    if (openIndex === index) {
-      // Close the currently open one
-      gsap.to(contentRefs.current[index], { height: 0, opacity: 0, duration: 0.3, ease: 'power2.out' });
-      setOpenIndex(-1);
-    } else {
-      // Close previously open
-      if (openIndex !== -1) {
-        gsap.to(contentRefs.current[openIndex], { height: 0, opacity: 0, duration: 0.3, ease: 'power2.out' });
-      }
-      // Open new one
-      setOpenIndex(index);
-      gsap.fromTo(contentRefs.current[index], 
-        { height: 0, opacity: 0 },
-        { height: 'auto', opacity: 1, duration: 0.4, ease: 'power2.out' }
-      );
-    }
-  };
+  const toggleAccordion = (index) => setOpenIndex(current => current === index ? -1 : index);
 
   return (
     <section id="faq" className="faq-section container">
@@ -56,18 +36,17 @@ export default function FAQSection() {
           <div 
             key={i} 
             className={`faq__item ${openIndex === i ? 'faq__item--open' : ''}`}
-            onClick={() => toggleAccordion(i)}
           >
-            <div className="faq__question">
+            <button className="faq__question" onClick={() => toggleAccordion(i)} aria-expanded={openIndex === i} aria-controls={`faq-answer-${i}`}>
               <h3>{faq.question}</h3>
               <div className="faq__icon">
                 <Icon icon="ph:caret-down-bold" />
               </div>
-            </div>
+            </button>
             <div 
               className="faq__answer-wrapper" 
-              ref={el => contentRefs.current[i] = el}
-              style={{ height: i === 0 ? 'auto' : 0, opacity: i === 0 ? 1 : 0, overflow: 'hidden' }}
+              id={`faq-answer-${i}`}
+              hidden={openIndex !== i}
             >
               <div className="faq__answer">
                 <p>{faq.answer}</p>

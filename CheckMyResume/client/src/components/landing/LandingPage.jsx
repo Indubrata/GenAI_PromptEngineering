@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+
 import useScrollReveal from '../../hooks/useScrollReveal';
 import HeroSection from './HeroSection';
 import UploadSection from './UploadSection';
@@ -12,12 +12,10 @@ import './LandingPage.css';
 export default function LandingPage() {
   useScrollReveal();
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+
 
   return (
-    <main className="landing-page">
+    <div className="landing-page">
       <HeroSection />
       <UploadSection />
       <StorySection />
@@ -25,6 +23,6 @@ export default function LandingPage() {
       <ReviewsSection />
       <CTASection />
       <FAQSection />
-    </main>
+    </div>
   );
 }

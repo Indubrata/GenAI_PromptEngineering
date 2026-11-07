@@ -102,3 +102,8 @@
   font-style: italic;
   margin: 0;
 }
+
+.reviews__marquee-container { overflow-x: auto; padding-bottom: 16px; }
+.reviews__marquee { transform: none; }
+
+@media (max-width: 480px) { .review-card { width: 300px; padding: 24px; } }

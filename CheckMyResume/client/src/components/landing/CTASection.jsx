@@ -1,9 +1,7 @@
-import { useNavigate } from 'react-router-dom';
 import SpecularButton from '../ui/SpecularButton';
 import './CTASection.css';
 
 export default function CTASection() {
-  const navigate = useNavigate();
 
   return (
     <section className="cta-section container">
