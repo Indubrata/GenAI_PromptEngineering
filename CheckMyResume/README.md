@@ -183,7 +183,3 @@ CheckMyResume/
 | Client cannot reach the API | Start the API on port `3000`, or set `API_PROXY_TARGET` / `VITE_API_URL` for the intended API address. |
 | PDF export fails in deployment | Ensure Puppeteer can access Chrome or Chromium, or set `BROWSER_EXECUTABLE_PATH`. |
 | No live job results | Verify `BRIGHT_DATA_API_KEY`; the interface will still offer targeted search links if Bright Data is unavailable. |
-
-## License
-
-No license has been specified for this project. Add a license file before distributing or reusing the code outside the repository's intended context.
