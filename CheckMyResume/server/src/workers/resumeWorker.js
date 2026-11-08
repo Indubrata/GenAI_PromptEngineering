@@ -14,12 +14,14 @@ Follow these rules STRICTLY:
 2. If a section is missing from the resume, leave it as an empty array or null.
 3. Critically evaluate how well the resume matches the target role, and calculate an 'atsScore' out of 100.
 4. Provide a 'feedback' summary with actionable advice to improve the resume for this role.
-5. The output MUST be valid JSON matching this exact schema:
+5. Extract every project and its full bullet points. Include contact.title inferred from the resume headline or most recent role; never assume Software Engineer.
+6. The output MUST be valid JSON matching this exact schema:
 {
   "atsScore": 85,
   "feedback": "Your resume has a strong structure, but lacks quantifiable metrics...",
   "contact": {
     "name": "Full Name",
+    "title": "Resume headline or most recent role",
     "email": "Email Address",
     "phone": "Phone Number",
     "location": "City, State",
@@ -43,6 +45,7 @@ Follow these rules STRICTLY:
       "graduationDate": "YYYY or string"
     }
   ],
+  "projects": [{ "name": "Project name", "link": "Repository or live URL", "description": ["Full project bullet points"] }],
   "skills": ["Skill 1", "Skill 2"]
 }
 `;
@@ -91,7 +94,7 @@ export const resumeWorker = new Worker('resumeProcessing', async (job) => {
 
     // Explicitly embed the targetRole that was used for parsing into the final data
     if (structuredResume && typeof structuredResume === 'object') {
-      structuredResume.targetRole = targetRole || 'Software Engineer';
+      structuredResume.targetRole = targetRole?.trim() || structuredResume.contact?.title || structuredResume.experience?.[0]?.role || '';
     }
 
     // Notify client: Done

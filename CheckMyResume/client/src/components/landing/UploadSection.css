@@ -454,3 +454,11 @@
 
 .upload__grid > * { min-width: 0; }
 .upload__file-info h4 { overflow-wrap: anywhere; }
+
+.upload__illustrations { position: relative; width: min(150px, 40%); aspect-ratio: 1; margin: 0 auto var(--space-3); }
+.upload__illustrations .illustration-video { position: absolute; inset: 0; opacity: 0; transition: opacity 600ms ease; }
+.upload__illustrations .upload__illustration--active { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .upload__illustrations .illustration-video { transition: none; } }
+.upload__progress-view { animation: upload-view-enter 600ms var(--ease-out-quart) both; }
+@keyframes upload-view-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .upload__progress-view { animation: none; } }

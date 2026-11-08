@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import ThemeToggle from './ThemeToggle';
+import { scrollToSection } from '../../utils/scrollToSection';
 import './Navbar.css';
 
 export default function Navbar() {
@@ -17,16 +18,10 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const scrollToSection = (id) => {
-    if (!isLanding) {
-      navigate('/');
-      setTimeout(() => {
-        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    } else {
-      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-    }
+  const handleSectionClick = (id) => {
     setMobileOpen(false);
+    if (!isLanding) navigate(`/#${id}`);
+    else scrollToSection(id);
   };
 
   return (
@@ -39,10 +34,10 @@ export default function Navbar() {
 
         {isLanding && (
           <ul className={`navbar__links ${mobileOpen ? 'navbar__links--open' : ''}`}>
-            <li><button onClick={() => scrollToSection('features')}>Features</button></li>
-            <li><button onClick={() => scrollToSection('story')}>Story</button></li>
-            <li><button onClick={() => scrollToSection('reviews')}>Reviews</button></li>
-            <li><button onClick={() => scrollToSection('faq')}>FAQ</button></li>
+            <li><button onClick={() => handleSectionClick('features')}>Features</button></li>
+            <li><button onClick={() => handleSectionClick('story')}>Story</button></li>
+            <li><button onClick={() => handleSectionClick('reviews')}>Reviews</button></li>
+            <li><button onClick={() => handleSectionClick('faq')}>FAQ</button></li>
           </ul>
         )}
 

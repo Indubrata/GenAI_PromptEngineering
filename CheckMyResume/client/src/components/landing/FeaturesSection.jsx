@@ -18,7 +18,7 @@ export default function FeaturesSection() {
       <div className="bento-grid" ref={gridRef}>
         
         {/* Large Feature: Real-time Editor */}
-        <div className="bento-card bento-card--large hover-glow reveal">
+        <div className="bento-card bento-card--large reveal">
           <div className="bento-card__content">
             <div className="bento-card__icon">
               <Icon icon="ph:magic-wand-bold" width="28" height="28" />
@@ -30,7 +30,7 @@ export default function FeaturesSection() {
         </div>
 
         {/* Medium Feature: Keyword Matching */}
-        <div className="bento-card bento-card--medium hover-glow reveal">
+        <div className="bento-card bento-card--medium reveal">
           <div className="bento-card__content">
             <div className="bento-card__icon">
               <Icon icon="ph:crosshair-bold" width="28" height="28" />
@@ -41,7 +41,7 @@ export default function FeaturesSection() {
         </div>
 
         {/* Medium Feature: Formatting */}
-        <div className="bento-card bento-card--medium hover-glow reveal">
+        <div className="bento-card bento-card--medium reveal">
           <div className="bento-card__content">
             <div className="bento-card__icon">
               <Icon icon="ph:layout-bold" width="28" height="28" />
@@ -52,7 +52,7 @@ export default function FeaturesSection() {
         </div>
 
         {/* Small Feature: Live Scraping */}
-        <div className="bento-card bento-card--small hover-glow reveal">
+        <div className="bento-card bento-card--small reveal">
           <div className="bento-card__content">
             <div className="bento-card__icon">
               <Icon icon="ph:magnifying-glass-bold" width="28" height="28" />
@@ -63,7 +63,7 @@ export default function FeaturesSection() {
         </div>
 
         {/* Small Feature: Outreach */}
-        <div className="bento-card bento-card--small hover-glow reveal">
+        <div className="bento-card bento-card--small reveal">
           <div className="bento-card__content">
             <div className="bento-card__icon">
               <Icon icon="ph:envelope-simple-bold" width="28" height="28" />

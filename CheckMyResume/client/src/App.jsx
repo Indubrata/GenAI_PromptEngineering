@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { scrollToSection } from './utils/scrollToSection';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { ResumeProvider } from './context/ResumeContext';
@@ -9,6 +10,7 @@ import ScorePage from './components/analysis/ScorePage';
 import EditorPage from './components/editor/EditorPage';
 import ExportPage from './components/export/ExportPage';
 import ErrorBox from './components/shared/ErrorBox';
+import AnimatedBackground from './components/ui/AnimatedBackground';
 
 
 import './css/variables.css';
@@ -18,7 +20,7 @@ import './css/animations.css';
 function RouteScroll() {
   const { pathname, hash } = useLocation();
   useEffect(() => {
-    if (hash) document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth' });
+    if (hash) scrollToSection(hash.slice(1));
     else window.scrollTo({ top: 0, behavior: 'instant' });
   }, [pathname, hash]);
   return null;
@@ -30,6 +32,7 @@ function App() {
       <ResumeProvider>
         <BrowserRouter>
           <RouteScroll />
+          <AnimatedBackground />
           <div className="app-shell">
 
             <Navbar />

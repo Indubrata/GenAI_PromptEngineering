@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useLayoutEffect, useCallback } from 'react';
 
 const ThemeContext = createContext(null);
 
@@ -12,7 +12,7 @@ export function ThemeProvider({ children }) {
     return 'light';
   });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('cmr-theme', theme);
   }, [theme]);

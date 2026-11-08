@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import './ReviewsSection.css';
 
@@ -11,40 +11,38 @@ const REVIEWS = [
 ];
 
 export default function ReviewsSection() {
-  const marqueeRef = useRef(null);
+  const [active, setActive] = useState(0);
+  useEffect(() => {
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const timer = setInterval(() => {
+      if (!document.hidden && !motion.matches) setActive(current => (current + 1) % REVIEWS.length);
+    }, 9000);
+    return () => clearInterval(timer);
+  }, []);
 
   return (
-    <section id="reviews" className="reviews-section">
+    <section id="reviews" className="reviews-section" aria-label="Customer reviews">
       <div className="container reviews__header">
-        <h2 className="reviews__title">Don't just take our word for it.</h2>
-        <p className="reviews__subtitle">Join thousands of professionals who beat the algorithm and landed their dream roles.</p>
+        <h2 className="reviews__title">What people are saying.</h2>
+        <p className="reviews__subtitle">Feedback shared through our feedback form.</p>
+      </div>
+      <div className="reviews__stage">
+        {REVIEWS.map((review, index) => {
+          const offset = (index - active + REVIEWS.length) % REVIEWS.length;
+          const position = offset === 0 ? 'center' : offset === 1 ? 'right' : offset === REVIEWS.length - 1 ? 'left' : 'hidden';
+          return (
+            <article key={review.name} className={`review-card review-card--${position}`} aria-hidden={position !== 'center'}>
+              <div className="review-card__avatar">{review.name.charAt(0)}</div>
+              <div className="review-card__rating" aria-label="5 out of 5 stars">
+                {[0, 1, 2, 3, 4].map(star => <Icon key={star} icon="ph:star-fill" aria-hidden="true" />)}
+              </div>
+              <p className="review-card__text">“{review.text}”</p>
+              <div><h3 className="review-card__name">{review.name}</h3><p className="review-card__role">{review.role}</p></div>
+            </article>
+          );
+        })}
       </div>
 
-      <div className="reviews__marquee-container">
-        <div className="reviews__marquee" ref={marqueeRef}>
-          {REVIEWS.map((review, i) => (
-            <div key={i} className="review-card glass hover-glow">
-              <div className="review-card__header">
-                <div className="review-card__avatar">
-                  {review.name.charAt(0)}
-                </div>
-                <div>
-                  <h4 className="review-card__name">{review.name}</h4>
-                  <p className="review-card__role">{review.role}</p>
-                </div>
-                <div className="review-card__rating">
-                  <Icon icon="ph:star-fill" color="var(--accent-gold)" />
-                  <Icon icon="ph:star-fill" color="var(--accent-gold)" />
-                  <Icon icon="ph:star-fill" color="var(--accent-gold)" />
-                  <Icon icon="ph:star-fill" color="var(--accent-gold)" />
-                  <Icon icon="ph:star-fill" color="var(--accent-gold)" />
-                </div>
-              </div>
-              <p className="review-card__text">"{review.text}"</p>
-            </div>
-          ))}
-        </div>
-      </div>
     </section>
   );
 }

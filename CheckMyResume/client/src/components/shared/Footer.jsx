@@ -35,6 +35,15 @@ export default function Footer() {
           </div>
         </div>
 
+        <div className="footer__column footer__contact">
+          <h4>Connect</h4>
+          <ul>
+            <li><a href="https://www.linkedin.com/in/indubrata-das/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" title="LinkedIn"><Icon icon="ph:linkedin-logo" width="24" height="24" aria-hidden="true" /></a></li>
+            <li><a href="https://github.com/Indubrata/GenAI_PromptEngineering/tree/main/CheckMyResume" target="_blank" rel="noopener noreferrer" aria-label="GitHub" title="GitHub"><Icon icon="ph:github-logo" width="24" height="24" aria-hidden="true" /></a></li>
+            <li><a href="mailto:indubrata.d@gmail.com" aria-label="Email Indubrata" title="Email Indubrata"><Icon icon="ph:envelope" width="24" height="24" aria-hidden="true" /></a></li>
+          </ul>
+        </div>
+
         <div className="footer__bottom">
           <p className="footer__copyright">
             &copy; {year} CheckMyResume. All rights reserved.

@@ -4,12 +4,12 @@
   left: var(--space-4);
   right: var(--space-4);
   z-index: var(--z-navbar);
-  border-radius: var(--radius-pill);
+  border-radius: 16px;
   background: var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-md);
+  box-shadow: none;
   transition: top var(--duration-normal) var(--ease-out-quart),
               padding var(--duration-normal) var(--ease-out-quart),
               background var(--duration-normal) var(--ease-out-quart);
@@ -17,7 +17,7 @@
 
 .navbar--scrolled {
   top: var(--space-2);
-  box-shadow: var(--shadow-lg);
+  box-shadow: none;
 }
 
 .navbar__inner {
@@ -128,7 +128,7 @@
     -webkit-backdrop-filter: blur(var(--glass-blur));
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-lg);
+    box-shadow: none;
   }
 
   .navbar__links--open {

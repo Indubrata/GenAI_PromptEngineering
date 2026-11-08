@@ -1,0 +1,20 @@
+.illustration-video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+[data-theme='dark'] .illustration-video {
+  filter: invert(1) hue-rotate(180deg);
+  mix-blend-mode: screen;
+}
+.illustration-video {
+  mask-image: radial-gradient(circle, black 48%, transparent 70%);
+  -webkit-mask-image: radial-gradient(circle, black 48%, transparent 70%);
+  transition: filter 700ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .illustration-video { transition: none; }
+}

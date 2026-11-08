@@ -1,34 +1,42 @@
 import { useEffect } from 'react';
 
+const DESKTOP_MOTION = '(min-width: 769px) and (hover: hover) and (pointer: fine) and (not (any-pointer: coarse)) and (prefers-reduced-motion: no-preference)';
+
 export default function useScrollReveal() {
   useEffect(() => {
-    const observerCallback = (entries, observer) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.setAttribute('data-visible', 'true');
-          // Optional: stop observing once revealed
-          observer.unobserve(entry.target);
+    const media = window.matchMedia(DESKTOP_MOTION);
+    const elements = [...document.querySelectorAll('.landing-page > section, .footer')];
+    let observer;
+    const configure = () => {
+      observer?.disconnect();
+      if (!media.matches) {
+        elements.forEach(element => element.removeAttribute('data-scroll-reveal'));
+        return;
+      }
+      observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.dataset.scrollReveal = 'visible';
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0, rootMargin: '0px 0px -40px 0px' });
+      elements.forEach(element => {
+        // Never hide content already reached, including deep links and browser back.
+        if (element.getBoundingClientRect().top < window.innerHeight - 40 || element.dataset.scrollReveal === 'visible') {
+          element.dataset.scrollReveal = 'visible';
+        } else {
+          element.dataset.scrollReveal = 'pending';
+          observer.observe(element);
         }
       });
     };
-
-    const observerOptions = {
-      root: null,
-      rootMargin: '0px',
-      threshold: 0.01 // Trigger when 15% of the element is visible
-    };
-
-    const observer = new IntersectionObserver(observerCallback, observerOptions);
-
-    const revealElements = document.querySelectorAll(
-      '.reveal, .reveal-left, .reveal-right, .reveal-scale'
-    );
-
-    revealElements.forEach(el => observer.observe(el));
-
+    configure();
+    media.addEventListener('change', configure);
     return () => {
-      revealElements.forEach(el => observer.unobserve(el));
-      observer.disconnect();
+      observer?.disconnect();
+      media.removeEventListener('change', configure);
+      elements.forEach(element => element.removeAttribute('data-scroll-reveal'));
     };
   }, []);
 }

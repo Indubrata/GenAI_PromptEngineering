@@ -1,4 +1,5 @@
 import express from 'express';
+import { existsSync } from 'node:fs';
 import puppeteer from 'puppeteer';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
 import { body, validationResult } from 'express-validator';
@@ -245,7 +246,7 @@ router.post('/pdf',
       browser = await puppeteer.launch({ 
         // Use Puppeteer's own Chrome unless an explicit path is provided (the old hard-coded
         // /usr/bin/brave-browser only exists on the original dev machine, never on Render).
-        ...(process.env.BROWSER_EXECUTABLE_PATH ? { executablePath: process.env.BROWSER_EXECUTABLE_PATH } : {}),
+        executablePath: process.env.BROWSER_EXECUTABLE_PATH || [puppeteer.executablePath(), '/usr/bin/chromium', '/usr/bin/google-chrome', '/usr/bin/brave-browser'].find(path => existsSync(path)),
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',

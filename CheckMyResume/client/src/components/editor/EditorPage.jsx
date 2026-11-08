@@ -40,13 +40,13 @@ export default function EditorPage() {
   const location = useLocation();
 
   // Starting score: 0 for scratch, or the analyzed score if uploaded
-  const baseScore = location.state?.score !== undefined ? location.state.score : (location.state?.resumeData?.atsScore ?? 0);
+  const baseScore = location.state?.score !== undefined ? location.state.score : (location.state?.resumeData?.atsScore ?? null);
   const [usedSuggestions, setUsedSuggestions] = useState({});
   const [validationError, setValidationError] = useState('');
   const [newSection, setNewSection] = useState('');
   const [suggestionInputs, setSuggestionInputs] = useState({});
 
-  const currentScore = Math.min(100, baseScore);
+  const currentScore = baseScore === null ? null : Math.min(100, baseScore + Object.values(usedSuggestions).reduce((sum, points) => sum + points, 0));
 
   // Initialize resumeData safely, defaulting to empty arrays/objects
   const initialData = location.state?.resumeData || {};
@@ -127,7 +127,7 @@ export default function EditorPage() {
     }
 
     // Add points to real-time ATS score
-    setUsedSuggestions(prev => ({ ...prev, [sKey]: true }));
+    setUsedSuggestions(prev => ({ ...prev, [sKey]: suggestion.points }));
   };
 
   // Validation: Must enter at least Full Name and an Email or Phone number
@@ -180,7 +180,7 @@ export default function EditorPage() {
         </header>
 
         {validationError && (
-          <div className="editor-contact-error">
+          <div className="editor-contact-error" role="alert">
             <Icon icon="ph:warning-circle-bold" width="20" />
             <span>{validationError}</span>
           </div>
@@ -407,23 +407,24 @@ export default function EditorPage() {
       {/* Column 3: Tools Sidebar (AI Assistant / Score Meter) */}
       <aside className="editor-page__tools">
         <div className="editor-tool-card">
-          <h3>Original Analysis Score</h3>
+          <h3>Estimated ATS Score</h3>
           <div className="mini-score">
-             <span className="mini-score__val">{currentScore}</span>/100
+             <span className="mini-score__val">{currentScore ?? '—'}</span>{currentScore !== null && '/100'}
           </div>
-          <p>This score is from your uploaded resume. Edits have not been rescored.</p>
+          <p>{currentScore === null ? 'Upload your completed PDF for an AI analysis.' : 'Estimated improvement from applied tips; not a fresh AI assessment or a guaranteed ATS result.'}</p>
         </div>
         
         <div className="editor-tool-card">
           <h3>Writing Tips for {sections[activeIndex]}</h3>
           <ul className="ai-suggestions">
             {AI_SUGGESTIONS[activeSection]?.map((suggestion, idx) => {
+              if (suggestion.field && resumeData.contact?.[suggestion.field]?.trim()) return null;
               const sKey = `${activeSection}-${idx}`;
               const isUsed = !!usedSuggestions[sKey];
               return (
                 <li key={idx} className="ai-suggestion-item">
                   <div className="ai-suggestion-text">
-                    <span>{suggestion.text}</span>
+                    <span>{suggestion.text} · Estimated +{Math.min(suggestion.points, 100 - (currentScore ?? 0))} points</span>
                     
                   </div>
                   {!isUsed && <input className="editor-input" aria-label={`Your detail for ${suggestion.text}`} placeholder="Enter your own accurate detail" value={suggestionInputs[sKey] || ''} onChange={e => setSuggestionInputs(prev => ({ ...prev, [sKey]: e.target.value }))} />}

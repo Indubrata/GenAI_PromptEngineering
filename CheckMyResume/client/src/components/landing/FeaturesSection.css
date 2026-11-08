@@ -36,9 +36,9 @@
   gap: 2px; /* Defines the border thickness between items */
   background-color: var(--border-subtle);
   border: 2px solid var(--border-subtle);
-  border-radius: var(--radius-2xl);
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: var(--shadow-lg);
+  box-shadow: none;
 }
 
 .bento-card {
@@ -66,9 +66,9 @@
   width: 48px;
   height: 48px;
   border-radius: var(--radius-md);
-  background: var(--bg-elevated);
+  background: transparent;
   color: var(--text-primary);
-  border: 1px solid var(--border-default);
+  border: none;
   margin-bottom: var(--space-2);
   transition: color var(--duration-fast) var(--ease-out-quart),
               border-color var(--duration-fast) var(--ease-out-quart);
@@ -96,6 +96,18 @@
   .bento-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bento-card--large { grid-column: span 2; }
 }
-@media (min-width: 1024px) {
+@media (min-width: 900px) {
   .bento-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Keep the complete toolkit readable in ordinary laptop-sized windows. */
+@media (min-width: 900px) {
+  .features-section { gap: 24px; }
+  .features__header { max-width: 760px; }
+  .features__title { font-size: clamp(2rem, 3.5vw, 2.75rem); }
+  .features__subtitle { font-size: 1rem; }
+  .bento-card__content { padding: 24px; gap: 10px; }
+  .bento-card__icon { width: 40px; height: 40px; margin-bottom: 0; }
+  .bento-card h3 { font-size: 1.125rem; }
+  .bento-card p { line-height: 1.6; }
 }

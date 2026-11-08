@@ -46,7 +46,8 @@ export default function FAQSection() {
             <div 
               className="faq__answer-wrapper" 
               id={`faq-answer-${i}`}
-              hidden={openIndex !== i}
+              aria-hidden={openIndex !== i}
+              inert={openIndex !== i ? true : undefined}
             >
               <div className="faq__answer">
                 <p>{faq.answer}</p>

@@ -13,7 +13,7 @@ export default function ExportPage() {
   const navigate = useNavigate();
   const resumeData = location.state?.resumeData;
   // Use targetRole from resumeData (which survives refreshes), then context, then fallback
-  const userTitle = resumeData?.targetRole || jobRole || resumeData?.contact?.title || 'Software Engineer';
+  const userTitle = resumeData?.targetRole || jobRole || resumeData?.contact?.title || resumeData?.experience?.[0]?.role || 'jobs';
 
   const [jobMatches, setJobMatches]       = useState([]);
   const [jobsIsLive, setJobsIsLive]       = useState(false);
@@ -111,7 +111,7 @@ export default function ExportPage() {
   const targetRecruiterName = recIsLive && currentEntry?.name ? currentEntry.name : 'Hiring Manager';
   const targetCompany = recIsLive && currentEntry?.company ? currentEntry.company : 'your team';
 
-  const messageText = `Hi ${targetRecruiterName},\n\nI came across open ${userTitle} positions at ${targetCompany} and was genuinely excited — your team's work aligns closely with my technical background. I've spent the past several years building production-grade systems and would love to explore how I can contribute.\n\nI've attached my ATS-optimized resume for your review. Would you be open to a brief 15-minute chat this week or next?\n\nLooking forward to connecting!\n\nBest regards`;
+  const messageText = `Hi ${targetRecruiterName},\n\nI'm interested in ${userTitle} opportunities with ${targetCompany} and would welcome the chance to discuss how my background could contribute.\n\nI'd be happy to share my resume for your review. Would you be open to a brief 15-minute chat this week or next?\n\nLooking forward to connecting!\n\nBest regards`;
 
   const handleCopy = async () => {
     try {

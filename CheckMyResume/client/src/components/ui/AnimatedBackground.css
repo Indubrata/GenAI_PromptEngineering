@@ -1,0 +1,104 @@
+/* Palettes and motion controls live here so both themes share one motion language. */
+.animated-background {
+  --background-duration: 700ms;
+  --background-drift-duration: 48s;
+  --background-dust-duration: 65s;
+  --background-intensity: 1;
+  --background-light-base: #faf7f1;
+  --background-light-peach: rgba(236, 168, 139, .23);
+  --background-light-gold: rgba(224, 188, 112, .19);
+  --background-light-lavender: rgba(183, 175, 207, .20);
+  --background-light-dust: rgba(156, 113, 76, .24);
+  --background-light-grain: rgba(115, 89, 65, .035);
+  --background-dark-base: #0c0d1a;
+  --background-dark-blue: rgba(43, 60, 117, .35);
+  --background-dark-indigo: rgba(68, 48, 110, .27);
+  --background-dark-copper: rgba(155, 92, 49, .15);
+  --background-dark-dust: rgba(230, 190, 139, .38);
+  --background-dark-grain: rgba(241, 218, 187, .035);
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--bg-primary);
+}
+
+.animated-background--quiet { --background-intensity: .42; }
+
+.animated-background__palette {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  transition: opacity var(--background-duration) ease;
+}
+
+.animated-background__palette--light { background: var(--background-light-base); opacity: 1; }
+.animated-background__palette--dark { background: var(--background-dark-base); opacity: 0; }
+[data-theme='dark'] .animated-background__palette--dark { opacity: 1; }
+
+.animated-background__palette::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-radial-gradient(circle at 17% 23%, var(--background-grain-color) 0 .5px, transparent .8px 3px);
+  background-size: 5px 5px;
+  pointer-events: none;
+}
+.animated-background__palette--light { --background-grain-color: var(--background-light-grain); }
+.animated-background__palette--dark { --background-grain-color: var(--background-dark-grain); }
+
+.animated-background__glow {
+  position: absolute;
+  inset: -12%;
+  opacity: var(--background-intensity);
+  transition: opacity var(--background-duration) ease;
+  animation: background-drift var(--background-drift-duration) ease-in-out infinite alternate;
+}
+
+.animated-background__palette--light .animated-background__glow {
+  background:
+    radial-gradient(ellipse 40% 45% at 9% 18%, var(--background-light-peach), transparent 75%),
+    radial-gradient(ellipse 42% 42% at 92% 28%, var(--background-light-lavender), transparent 75%),
+    radial-gradient(ellipse 45% 35% at 75% 88%, var(--background-light-gold), transparent 75%);
+}
+
+.animated-background__palette--dark .animated-background__glow {
+  background:
+    radial-gradient(ellipse 45% 45% at 8% 18%, var(--background-dark-blue), transparent 75%),
+    radial-gradient(ellipse 43% 45% at 92% 26%, var(--background-dark-indigo), transparent 75%),
+    radial-gradient(ellipse 40% 35% at 75% 88%, var(--background-dark-copper), transparent 75%);
+}
+
+.animated-background__dust {
+  position: absolute;
+  inset: -5%;
+  opacity: calc(var(--background-intensity) * .55);
+  transition: opacity var(--background-duration) ease;
+  background-image: radial-gradient(circle, var(--background-dust-color) 0 1px, transparent 1.5px);
+  background-size: 137px 151px;
+  animation: background-dust var(--background-dust-duration) ease-in-out infinite alternate;
+  mask-image: linear-gradient(90deg, black, transparent 30%, transparent 70%, black);
+  -webkit-mask-image: linear-gradient(90deg, black, transparent 30%, transparent 70%, black);
+}
+.animated-background__palette--light .animated-background__dust { --background-dust-color: var(--background-light-dust); }
+.animated-background__palette--dark .animated-background__dust { --background-dust-color: var(--background-dark-dust); }
+
+@keyframes background-drift {
+  from { transform: translate3d(-1%, -1%, 0) scale(1); }
+  to { transform: translate3d(1%, 1%, 0) scale(1.04); }
+}
+@keyframes background-dust {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, -18px, 0); }
+}
+
+.animated-background[data-paused='true'] .animated-background__glow,
+.animated-background[data-paused='true'] .animated-background__dust { animation-play-state: paused; }
+
+@media (max-width: 600px) {
+  .animated-background__dust { background-size: 190px 210px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animated-background__glow, .animated-background__dust { animation: none; }
+}

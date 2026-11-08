@@ -4,24 +4,11 @@
 
 .cta__banner {
   padding: var(--space-9) var(--space-6);
-  border-radius: var(--radius-2xl);
+  border-radius: 16px;
   text-align: center;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-surface) 100%);
-}
-
-/* Subtle background glow for the banner */
-.cta__banner::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at center, var(--accent-copper-soft) 0%, transparent 50%);
-  opacity: 0.5;
-  pointer-events: none;
+  background: var(--bg-surface);
 }
 
 .cta__content {
@@ -66,7 +53,7 @@
 
 @media (min-width: 768px) {
   .cta__banner {
-    padding: 120px var(--space-8);
+    padding: 64px var(--space-8);
   }
   
   .cta__title {

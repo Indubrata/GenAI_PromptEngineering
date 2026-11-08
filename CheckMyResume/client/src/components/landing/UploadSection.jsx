@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import { useResume } from '../../context/ResumeContext';
 import SpecularButton from '../ui/SpecularButton';
+import IllustrationVideo from '../ui/IllustrationVideo';
 import './UploadSection.css';
 
 // ─── Upload pipeline steps ──────────────────────────────────────────────────
@@ -46,6 +47,7 @@ export default function UploadSection() {
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isUploading) return;
     if (e.type === 'dragenter' || e.type === 'dragover') {
       setIsDragging(true);
     } else if (e.type === 'dragleave') {
@@ -57,6 +59,7 @@ export default function UploadSection() {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
+    if (isUploading) return;
     
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFile(e.dataTransfer.files[0]);
@@ -122,6 +125,8 @@ export default function UploadSection() {
         setUploadPct(Math.round((e.loaded / e.total) * 100));
       }
     });
+
+    xhr.upload.addEventListener('load', () => setActiveStep('parsing'));
 
     xhr.addEventListener('load', () => {
       if (xhr.status < 200 || xhr.status >= 300) {
@@ -229,10 +234,10 @@ export default function UploadSection() {
         {/* ── Drag & Drop Zone ───────────────────────────────────────────── */}
         <div 
           className={`upload__dropzone ${isDragging ? 'upload__dropzone--active' : ''} ${file ? 'upload__dropzone--has-file' : ''} ${isUploading ? 'upload__dropzone--uploading' : ''} reveal-left`}
-          onDragEnter={isUploading ? undefined : handleDrag}
-          onDragLeave={isUploading ? undefined : handleDrag}
-          onDragOver={isUploading ? undefined : handleDrag}
-          onDrop={isUploading ? undefined : handleDrop}
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
           onClick={isUploading ? undefined : () => fileInputRef.current?.click()}
           role="button" tabIndex={isUploading ? -1 : 0} aria-label="Choose PDF resume"
           onKeyDown={e => { if (!isUploading && e.target === e.currentTarget && ['Enter', ' '].includes(e.key)) { e.preventDefault(); fileInputRef.current?.click(); } }}
@@ -250,7 +255,11 @@ export default function UploadSection() {
 
           {/* ── Progress overlay ─────────────────────────────────────── */}
           {isUploading ? (
-            <div className="upload__progress-view">
+            <div className="upload__progress-view" aria-live="polite">
+              <div className="upload__illustrations" aria-hidden="true">
+                <IllustrationVideo src="/media/upload.mp4" active={activeStep === 'upload'} className={activeStep === 'upload' ? 'upload__illustration--active' : ''} />
+                <IllustrationVideo src="/media/scan.webm" active={activeStep !== 'upload'} className={activeStep !== 'upload' ? 'upload__illustration--active' : ''} />
+              </div>
               {/* Step indicators */}
               <div className="upload__steps">
                 {STEPS.map((step, idx) => {
