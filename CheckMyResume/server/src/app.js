@@ -13,6 +13,11 @@ import jobsRoutes from './routes/jobs.js';
 import exportRoutes from './routes/export.js';
 
 const app = express();
+app.get('/.well-known/strix-verify.txt', (req, res) => {
+  res.type('text/plain').sendFile(
+    path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../strix-verify.txt')
+  );
+});
 const isProd = process.env.NODE_ENV === 'production';
 
 // Render (and most PaaS hosts) terminate TLS at a reverse proxy. Without this,
